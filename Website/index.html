@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Desk Booking & Monitoring System</title>
+    <!-- Paho MQTT WebSocket Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f4f6f9; }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; }
+        .container { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+        .card { background: white; border: 2px solid #28a745; border-radius: 8px; padding: 20px; width: 320px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s ease; }
+        .card.offline-card { border-color: #6c757d; opacity: 0.75; }
+        .card h2 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .online-tag { font-size: 12px; padding: 3px 8px; border-radius: 12px; font-weight: normal; }
+        .online-tag.online { background-color: #28a745; color: white; }
+        .online-tag.offline { background-color: #6c757d; color: white; }
+        
+        .status-box { font-weight: bold; padding: 10px; border-radius: 4px; text-align: center; margin: 12px 0; font-size: 18px; }
+        .vacant { background-color: #d4edda; color: #155724; }
+        .booked { background-color: #cce5ff; color: #004085; }
+        .occupied { background-color: #f8d7da; color: #721c24; }
+        .off { background-color: #e2e3e5; color: #383d41; }
+        
+        .info-group { margin: 8px 0; font-size: 15px; }
+        .pin-box { font-size: 22px; font-weight: bold; color: #d9534f; text-align: center; background: #fff3cd; padding: 8px; border-radius: 4px; margin: 10px 0; letter-spacing: 2px; }
+        
+        .btn { width: 100%; padding: 10px; margin-top: 8px; font-size: 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-book { background-color: #28a745; color: white; }
+        .btn-logout { background-color: #dc3545; color: white; }
+        .btn:disabled { background-color: #cccccc; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <h1>ระบบจองโต๊ะทำงานอัจฉริยะ (Smart Desk Dashboard)</h1>
+    
+    <div class="container" id="desk-container"></div>
+
+    <script>
+        const broker = "broker.hivemq.com";
+        const port = 8000;
+        const clientID = "web_client_" + Math.random().toString(16).substr(2, 8);
+
+        // ตัวแปรเก็บสถานะข้อมูลโต๊ะทั้งหมดแบบไดนามิก
+        const boardsData = {};
+
+        const client = new Paho.MQTT.Client(broker, port, clientID);
+
+        client.onConnectionLost = onConnectionLost;
+        client.onMessageArrived = onMessageArrived;
+
+        client.connect({ onSuccess: onConnect });
+
+        function onConnect() {
+            console.log("MQTT Connected!");
+            client.subscribe("smartdesk/+/status");
+            client.subscribe("smartdesk/+/temp");
+            client.subscribe("smartdesk/+/pin");
+            client.subscribe("smartdesk/+/online");
+        }
+
+        function onConnectionLost(responseObject) {
+            if (responseObject.errorCode !== 0) {
+                console.log("Connection Lost: " + responseObject.errorMessage);
+            }
+        }
+
+        function getOrCreateCard(boardId) {
+            let card = document.getElementById(`desk-${boardId}`);
+            if (!card) {
+                const container = document.getElementById('desk-container');
+                card = document.createElement('div');
+                card.className = 'card offline-card';
+                card.id = `desk-${boardId}`;
+                
+                const tableDisplayName = boardId.toUpperCase();
+                card.innerHTML = `
+                    <h2>
+                        <span> ${tableDisplayName}</span>
+                        <span id="online-${boardId}" class="online-tag offline">OFFLINE</span>
+                    </h2>
+                    <div>สถานะโต๊ะ: <div id="status-${boardId}" class="status-box off">ไม่พร้อมใช้งาน</div></div>
+                    <div class="info-group">อุณหภูมิห้อง: <b id="temp-${boardId}">--</b> °C</div>
+                    <div class="info-group">หมายเลขการจอง (PIN):</div>
+                    <div id="pin-${boardId}" class="pin-box">----</div>
+                    
+                    <button id="btn-book-${boardId}" class="btn btn-book" onclick="sendBooking('${boardId}')" disabled>จองโต๊ะ</button>
+                    <button id="btn-logout-${boardId}" class="btn btn-logout" onclick="sendLogout('${boardId}')" disabled>ลอคเอาท์ (คืนโต๊ะ)</button>
+                `;
+                container.appendChild(card);
+            }
+            return card;
+        }
+
+        function updateBoardUI(boardId) {
+            const data = boardsData[boardId];
+            if (!data) return;
+
+            const onlineTag = document.getElementById(`online-${boardId}`);
+            const statusElem = document.getElementById(`status-${boardId}`);
+            const tempElem = document.getElementById(`temp-${boardId}`);
+            const pinElem = document.getElementById(`pin-${boardId}`);
+            const bookBtn = document.getElementById(`btn-book-${boardId}`);
+            const logoutBtn = document.getElementById(`btn-logout-${boardId}`);
+            const cardElem = document.getElementById(`desk-${boardId}`);
+
+            if (!data.online) {
+                // กรณี OFFLINE
+                onlineTag.innerText = "OFFLINE";
+                onlineTag.className = "online-tag offline";
+                cardElem.classList.add("offline-card");
+
+                statusElem.innerText = "ไม่พร้อมใช้งาน";
+                statusElem.className = "status-box off";
+                bookBtn.disabled = true;
+                logoutBtn.disabled = true;
+                pinElem.innerText = "----";
+            } else {
+                // กรณี ONLINE
+                onlineTag.innerText = "ONLINE";
+                onlineTag.className = "online-tag online";
+                cardElem.classList.remove("offline-card");
+
+                if (data.status === "VACANT") {
+                    statusElem.innerText = "VACANT";
+                    statusElem.className = "status-box vacant";
+                    bookBtn.disabled = false;
+                    logoutBtn.disabled = true;
+                    pinElem.innerText = "----";
+                } else if (data.status === "OFF") {
+                    statusElem.innerText = "ปิดเครื่อง (OFF)";
+                    statusElem.className = "status-box off";
+                    bookBtn.disabled = true;
+                    logoutBtn.disabled = true;
+                    pinElem.innerText = "----";
+                } else {
+                    // สถานะ BOOKED หรือ OCCUPIED
+                    statusElem.innerText = data.status;
+                    statusElem.className = "status-box " + data.status.toLowerCase();
+                    bookBtn.disabled = true;
+                    logoutBtn.disabled = false;
+                    pinElem.innerText = data.pin;
+                }
+            }
+            if (tempElem) tempElem.innerText = data.temp;
+        }
+
+        function onMessageArrived(message) {
+            const topic = message.destinationName;
+            const payload = message.payloadString;
+            const topicParts = topic.split("/");
+            
+            if (topicParts.length < 3 || topicParts[0] !== "smartdesk") return;
+
+            const boardId = topicParts[1];
+            const type = topicParts[2];
+
+            getOrCreateCard(boardId);
+
+            if (!boardsData[boardId]) {
+                boardsData[boardId] = { online: true, status: "VACANT", temp: "--", pin: "----" };
+            }
+
+            if (type === "online") {
+                boardsData[boardId].online = (payload === "ONLINE");
+            } 
+            else if (type === "status") {
+                boardsData[boardId].status = payload;
+            } 
+            else if (type === "temp") {
+                boardsData[boardId].temp = payload;
+            } 
+            else if (type === "pin") {
+                boardsData[boardId].pin = payload;
+            }
+
+            // อัปเดตหน้าจอทันทีที่มีข้อมูลใหม่เข้ามา
+            updateBoardUI(boardId);
+        }
+
+        function sendBooking(boardId) {
+            const message = new Paho.MQTT.Message("BOOK");
+            message.destinationName = `smartdesk/${boardId}/command`;
+            client.send(message);
+        }
+
+        function sendLogout(boardId) {
+            const message = new Paho.MQTT.Message("LOGOUT");
+            message.destinationName = `smartdesk/${boardId}/command`;
+            client.send(message);
+        }
+    </script>
+</body>
+</html>
