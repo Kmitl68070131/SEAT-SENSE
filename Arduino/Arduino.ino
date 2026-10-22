@@ -1,23 +1,30 @@
+/*
+  ================================================================================
+  Smart Desk IoT System - Arduino UNO R4 WiFi (Updated Keypad, LCD & Timeout)
+  ================================================================================
+*/
+
 #include <WiFiS3.h>
 #include <PubSubClient.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 
-// 1. ตั้งค่าการเชื่อมต่อ
 // ==========================================
-const char* SECRET_SSID     = "wachi_";             //wifi name
-const char* SECRET_PASS     = "12345678";           //wifi password
-const char* MQTT_BROKER     = "broker.hivemq.com";
-const int   MQTT_PORT       = 1883;
-const char* TABLE_BOARD_ID  = "tableA";             // Table name
-const unsigned long POWER_HOLD_TIME = 2000;         // ตั้งเวลากดปุ่ม * ค้างกี่วิ
+// 1. ตั้งค่าการเชื่อมต่อ (USER CONFIGURATION)
+// ==========================================
+const char* SECRET_SSID     = "wachi_";             // Wi-Fi SSID
+const char* SECRET_PASS     = "12345678";           // Wi-Fi Password
+const char* MQTT_BROKER     = "broker.hivemq.com";  // HiveMQ Public Broker
+const int   MQTT_PORT       = 1883;                 // Port TCP 1883
+const char* TABLE_BOARD_ID  = "tableA";             // ชื่อโต๊ะ (tableA, tableB, ฯลฯ)
 
-// 2. การกำหนดขาพอร์ต
 // ==========================================
-const int TRIG_1 = 2, ECHO_1 = 3;             // Ultrasonic 1
-const int TRIG_2 = 4, ECHO_2 = 5;             // Ultrasonic 2
-const int TMP36_PIN = A0;                     // TMP36 Sensor
-const int LED_R = A1, LED_G = A2, LED_B = A3; // RGB LED
+// 2. การกำหนดขาพอร์ต (PIN MAPPING)
+// ==========================================
+const int TRIG_1 = 2, ECHO_1 = 3;  // Ultrasonic 1
+const int TRIG_2 = 4, ECHO_2 = 5;  // Ultrasonic 2
+const int TMP36_PIN = A0;          // TMP36 Temp Sensor
+const int LED_R = A1, LED_G = A2, LED_B = A3; // RGB LED (Common Anode)
 
 const byte ROW_PINS[4] = {6, 7, 8, 9};
 const byte COL_PINS[4] = {10, 11, 12, 13};
@@ -33,7 +40,8 @@ String TOPIC_PIN      = "smartdesk/" + String(TABLE_BOARD_ID) + "/pin";
 String TOPIC_COMMAND  = "smartdesk/" + String(TABLE_BOARD_ID) + "/command";
 String TOPIC_ONLINE   = "smartdesk/" + String(TABLE_BOARD_ID) + "/online";
 
-// 3. ตัวแประบบและสถานะ
+// ==========================================
+// 3. ตัวแประบบและสถานะ (SYSTEM STATES)
 // ==========================================
 enum DeskState {
   STATE_OFF,
@@ -49,24 +57,33 @@ enum DeskState {
 };
 
 enum LedColorMode {
-  COLOR_OFF,
-  COLOR_BLUE,
-  COLOR_GREEN,
-  COLOR_RED
+  COLOR_UNKNOWN = -1,
+  COLOR_OFF = 0,
+  COLOR_BLUE = 1,
+  COLOR_GREEN = 2,
+  COLOR_RED = 3
 };
 
 DeskState currentState = STATE_VACANT;
 DeskState previousState = STATE_VACANT;
 DeskState previousStateBeforeOffConfirm = STATE_VACANT;
 
+LedColorMode currentLedColor = COLOR_UNKNOWN;
+
 uint32_t lcg_seed = 1234;
 String generatedPin = "";
 String inputBuffer = "";
 bool isPinScreenActive = false;
 
-// ระบบนับถอยหลังและPause
+// ตัวแประบบนับเวลาหน้า Welcome (Non-blocking)
+unsigned long welcomeStartTime = 0;
+
+// ตัวแประบบนับถอยหลังและหยุดเวลา (Pause)
 bool isPaused = false;
 unsigned long pauseStartTime = 0;
+int lastMins = -1;
+int lastSecs = -1;
+bool lastPauseState = false;
 
 unsigned long lastSensorRead = 0;
 unsigned long lastTempPublish = 0;
@@ -76,17 +93,26 @@ unsigned long officeSyndromeStartTime = 0;
 unsigned long officeSyndromeDuration = 45 * 60 * 1000UL;
 unsigned long lastMqttReconnect = 0;
 
-const unsigned long AUTO_LOGOUT_TIMEOUT = 25 * 60 * 1000UL; //จับเวลา 25 นาที ถ้าไม่มีคนนั่งจะlog out
+const unsigned long AUTO_LOGOUT_TIMEOUT = 25 * 60 * 1000UL; // 25 นาที คืนที่นั่งอัตโนมัติ
 float smoothedTemp = -999.0;
 
-// 4. ฟังก์ชันไฟ RGB LED
+// ตัวแปรสำหรับสแกน Keypad แบบ Non-blocking (Debounce)
+char lastKeyPressed = 0;
+unsigned long keyPressTime = 0;
+bool keyHandled = false;
+
 // ==========================================
-void setRGBColorMode(LedColorMode mode) {
+// 4. ฟังก์ชันไฟ RGB LED (Common Anode Logic)
+// ==========================================
+void setRGBColorMode(LedColorMode mode, bool force = false) {
+  if (!force && currentLedColor == mode) return;
+  currentLedColor = mode;
   digitalWrite(LED_R, (mode == COLOR_RED)   ? LOW : HIGH);
   digitalWrite(LED_G, (mode == COLOR_GREEN) ? LOW : HIGH);
   digitalWrite(LED_B, (mode == COLOR_BLUE)  ? LOW : HIGH);
 }
 
+// ==========================================
 // 5. ฟังก์ชันสุ่มรหัส PIN (LCG Algorithm)
 // ==========================================
 String generateLCGPin() {
@@ -100,31 +126,33 @@ String generateLCGPin() {
   return String(pinBuf);
 }
 
+// ==========================================
 // 6. ฟังก์ชันอ่านค่าเซนเซอร์
 // ==========================================
 float readUltrasonic(int trigPin, int echoPin) {
   digitalWrite(trigPin, LOW); delayMicroseconds(4);
   digitalWrite(trigPin, HIGH); delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
-  long duration = pulseIn(echoPin, HIGH, 30000);
+  long duration = pulseIn(echoPin, HIGH, 15000); // Timeout 15ms
   if (duration == 0) return -1.0;
   return (duration * 0.0343) / 2.0;
 }
 
 float readTMP36() {
   long sumRaw = 0;
-  for (int i = 0; i < 50; i++) {
+  for (int i = 0; i < 10; i++) {
     sumRaw += analogRead(TMP36_PIN);
-    delayMicroseconds(200);
+    delayMicroseconds(50);
   }
-  float avgRaw = (float)sumRaw / 50.0;
+  float avgRaw = (float)sumRaw / 10.0;
   float voltage = avgRaw * (5.0 / 1023.0);
-  float rawTemp = ((voltage - 0.5) * 100.0) + 21.0; // ชดเชย +21.0
+  float rawTemp = ((voltage - 0.5) * 100.0) + 20.0; // ชดเชยค่า +20.0
   if (smoothedTemp == -999.0) smoothedTemp = rawTemp;
   smoothedTemp = (0.05 * rawTemp) + (0.95 * smoothedTemp);
   return smoothedTemp;
 }
 
+// ==========================================
 // 7. ฟังก์ชันเปิด/ปิด เครื่อง (Power ON/OFF)
 // ==========================================
 void resetToVacant() {
@@ -132,7 +160,9 @@ void resetToVacant() {
   inputBuffer = "";
   isPinScreenActive = false;
   isPaused = false;
-  setRGBColorMode(COLOR_OFF);
+  lastMins = -1;
+  lastSecs = -1;
+  setRGBColorMode(COLOR_OFF, true);
   
   if (mqttClient.connected()) {
     mqttClient.publish(TOPIC_STATUS.c_str(), "VACANT", true);
@@ -140,14 +170,14 @@ void resetToVacant() {
     mqttClient.publish(TOPIC_ONLINE.c_str(), "ONLINE", true);
   }
   lcd.clear();
-  lcd.setCursor(0, 0); lcd.print(" Please booking ");
-  lcd.setCursor(0, 1); lcd.print("                ");
+  lcd.setCursor(0, 0); lcd.print(" Please Booking ");
+  lcd.setCursor(0, 1); lcd.print("  [*] Tern Off  ");
 }
 
 void turnOffMachine() {
   currentState = STATE_OFF;
   isPaused = false;
-  setRGBColorMode(COLOR_OFF);
+  setRGBColorMode(COLOR_OFF, true);
   lcd.clear();
   lcd.noBacklight();
   if (mqttClient.connected()) {
@@ -157,7 +187,54 @@ void turnOffMachine() {
   }
 }
 
-// 8. การรับสัญญาณ MQTT (MQTT Callback)
+// ==========================================
+// 8. การอัปเดตหน้าจอ LCD ของสถานะต่างๆ
+// ==========================================
+void redrawCurrentStateLCD() {
+  lcd.clear();
+  if (currentState == STATE_VACANT) {
+    lcd.setCursor(0, 0); lcd.print(" Please Booking ");
+    lcd.setCursor(0, 1); lcd.print("  [*] Tern Off  ");
+  } 
+  else if (currentState == STATE_BOOKED || currentState == STATE_ENTER_PIN) {
+    if (isPinScreenActive) {
+      char pinLine[17];
+      char padded[5] = "    ";
+      for (int i = 0; i < inputBuffer.length() && i < 4; i++) padded[i] = inputBuffer[i];
+      snprintf(pinLine, sizeof(pinLine), "PIN:%s  #|back", padded);
+      lcd.setCursor(0, 0); lcd.print(pinLine);
+      lcd.setCursor(0, 1); lcd.print("C|cancel  D|done");
+    } else {
+      lcd.setCursor(0, 0); lcd.print("  Please enter  ");
+      lcd.setCursor(0, 1); lcd.print(" your  password ");
+    }
+  } 
+  else if (currentState == STATE_MENU) {
+    lcd.setCursor(0, 0); lcd.print("PressA: RoomTemp");
+    lcd.setCursor(0, 1); lcd.print("PressB: Set Time");
+  }
+  else if (currentState == STATE_SET_TIME) {
+    lcd.setCursor(0, 0); lcd.print("SetTime(m):     ");
+    if (inputBuffer.length() > 0) {
+      lcd.setCursor(12, 0); lcd.print(inputBuffer);
+      lcd.setCursor(0, 1); lcd.print("C|cancel  D|done");
+    } else {
+      lcd.setCursor(0, 1); lcd.print("D|default B|back");
+    }
+  }
+  else if (currentState == STATE_CONFIRM_OFF) {
+    lcd.setCursor(0, 0); lcd.print("    Turn OFF    ");
+    lcd.setCursor(0, 1); lcd.print("A|Yes       B|No");
+  }
+  else if (currentState == STATE_OCCUPIED) {
+    lastMins = -1;
+    lastSecs = -1;
+    lastPauseState = !isPaused;
+  }
+}
+
+// ==========================================
+// 9. การรับสัญญาณและการจัดการ MQTT
 // ==========================================
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
   if (currentState == STATE_OFF) return;
@@ -177,9 +254,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
       mqttClient.publish(TOPIC_PIN.c_str(), generatedPin.c_str(), true);
       mqttClient.publish(TOPIC_STATUS.c_str(), "BOOKED", true);
 
-      lcd.clear();
-      lcd.setCursor(0, 0); lcd.print("  Please enter  ");
-      lcd.setCursor(0, 1); lcd.print(" your  password ");
+      redrawCurrentStateLCD();
       setRGBColorMode(COLOR_BLUE);
     } 
     else if (message == "LOGOUT") {
@@ -188,8 +263,6 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   }
 }
 
-// 9. การจัดการเชื่อมต่อ MQTT
-// ==========================================
 void maintainMqttConnection() {
   if (!mqttClient.connected()) {
     unsigned long now = millis();
@@ -200,9 +273,8 @@ void maintainMqttConnection() {
       if (mqttClient.connect(clientId.c_str(), NULL, NULL, TOPIC_ONLINE.c_str(), 1, true, "OFFLINE")) {
         mqttClient.subscribe(TOPIC_COMMAND.c_str());
         mqttClient.publish(TOPIC_ONLINE.c_str(), "ONLINE", true);
-        mqttClient.publish(TOPIC_STATUS.c_str(), "VACANT", true);
-        mqttClient.publish(TOPIC_PIN.c_str(), "-", true);
-        mqttClient.publish(TOPIC_TEMP.c_str(), String(readTMP36(), 1).c_str(), true);
+        mqttClient.publish(TOPIC_STATUS.c_str(), (currentState == STATE_VACANT) ? "VACANT" : "OCCUPIED", true);
+        mqttClient.publish(TOPIC_TEMP.c_str(), String(readTMP36(), 1).c_str(), false);
       }
     }
   } else {
@@ -210,7 +282,8 @@ void maintainMqttConnection() {
   }
 }
 
-// 10. การสแกน Keypad
+// ==========================================
+// 10. การสแกน Keypad แบบ Non-blocking (Single Press)
 // ==========================================
 char scanKeypad() {
   char keys[4][4] = {
@@ -220,102 +293,61 @@ char scanKeypad() {
     {'*','0','#','D'}
   };
   
+  char detectedKey = 0;
   for (int r = 0; r < 4; r++) {
     digitalWrite(ROW_PINS[r], LOW);
     for (int c = 0; c < 4; c++) {
       if (digitalRead(COL_PINS[c]) == LOW) {
-        delay(20);
-        unsigned long pressStart = millis();
-
-        while(digitalRead(COL_PINS[c]) == LOW) {
-          if (r == 3 && c == 0) { // ปุ่ม '*' กดค้าง
-            if (millis() - pressStart >= POWER_HOLD_TIME) {
-              if (currentState == STATE_OFF) {
-                // ถ้าเครื่องปิดอยู่ จะเปิดเครื่อง
-                lcd.backlight();
-                resetToVacant();
-              } else if (currentState != STATE_CONFIRM_OFF) {
-                // ถ้าเครื่องเปิดอยู่ จะถามว่าแน่ใจมั้ย
-                previousStateBeforeOffConfirm = currentState;
-                currentState = STATE_CONFIRM_OFF;
-                lcd.clear();
-                lcd.setCursor(0, 0); lcd.print("    Turn OFF    ");
-                lcd.setCursor(0, 1); lcd.print("A|Yes      B|No ");
-              }
-              while(digitalRead(COL_PINS[c]) == LOW);
-              digitalWrite(ROW_PINS[r], HIGH);
-              return 0;
-            }
-          }
-        }
-
-        digitalWrite(ROW_PINS[r], HIGH);
-        return keys[r][c];
+        detectedKey = keys[r][c];
       }
     }
     digitalWrite(ROW_PINS[r], HIGH);
+    if (detectedKey != 0) break;
   }
-  return 0;
-}
 
-void redrawCurrentStateLCD() {
-  lcd.clear();
-  if (currentState == STATE_VACANT) {
-    lcd.setCursor(0, 0); lcd.print(" Please booking ");
-    lcd.setCursor(0, 1); lcd.print("                ");
-  } 
-  else if (currentState == STATE_BOOKED || currentState == STATE_ENTER_PIN) {
-    if (isPinScreenActive) {
-      char pinLine[17];
-      char padded[5] = "    ";
-      for (int i = 0; i < inputBuffer.length(); i++) padded[i] = inputBuffer[i];
-      snprintf(pinLine, sizeof(pinLine), "PIN:%s  #|back", padded);
-      lcd.setCursor(0, 0); lcd.print(pinLine);
-      lcd.setCursor(0, 1); lcd.print("C|cancel  D|Done");
-    } else {
-      lcd.setCursor(0, 0); lcd.print("  Please enter  ");
-      lcd.setCursor(0, 1); lcd.print(" your  password ");
+  if (detectedKey != 0) {
+    if (lastKeyPressed != detectedKey) {
+      lastKeyPressed = detectedKey;
+      keyPressTime = millis();
+      keyHandled = false;
+    } else if (!keyHandled && (millis() - keyPressTime >= 30)) {
+      keyHandled = true;
+      return detectedKey;
     }
-  } 
-  else if (currentState == STATE_MENU) {
-    lcd.setCursor(0, 0); lcd.print("Press A:RoomTemp");
-    lcd.setCursor(0, 1); lcd.print("Press B:Set Time");
+  } else {
+    lastKeyPressed = 0;
+    keyHandled = false;
   }
-  else if (currentState == STATE_SET_TIME) {
-    lcd.setCursor(0, 0); lcd.print("Set Time(m):    ");
-    if (inputBuffer.length() > 0) {
-      lcd.setCursor(12, 0); lcd.print(inputBuffer);
-      lcd.setCursor(0, 1); lcd.print("C|cancel  D|Done");
-    } else {
-      lcd.setCursor(0, 1); lcd.print("Press D Default:");
-    }
-  }
-  else if (currentState == STATE_CONFIRM_OFF) {
-    lcd.setCursor(0, 0); lcd.print("    Turn OFF    ");
-    lcd.setCursor(0, 1); lcd.print("A|Yes      B|No ");
-  }
+
+  return 0;
 }
 
 void startOccupiedSession() {
   currentState = STATE_OCCUPIED;
   officeSyndromeStartTime = millis();
   isPaused = false;
+  lastMins = -1;
+  lastSecs = -1;
+  lastPauseState = false;
   if (mqttClient.connected()) {
     mqttClient.publish(TOPIC_STATUS.c_str(), "OCCUPIED", true);
   }
   lcd.clear();
 }
 
+// ==========================================
 // 11. SETUP & LOOP
 // ==========================================
 void setup() {
   Serial.begin(9600);
 
+  Wire.setWireTimeout(3000, true);
+
   digitalWrite(LED_R, HIGH);
   digitalWrite(LED_G, HIGH);
   digitalWrite(LED_B, HIGH);
   pinMode(LED_R, OUTPUT); pinMode(LED_G, OUTPUT); pinMode(LED_B, OUTPUT);
-  setRGBColorMode(COLOR_OFF);
+  setRGBColorMode(COLOR_OFF, true);
 
   pinMode(TRIG_1, OUTPUT); pinMode(ECHO_1, INPUT);
   pinMode(TRIG_2, OUTPUT); pinMode(ECHO_2, INPUT);
@@ -343,27 +375,50 @@ void setup() {
 void loop() {
   maintainMqttConnection();
 
+  // ส่งข้อมูลอุณหภูมิเข้า MQTT ทุกๆ 5 วินาที
   if (millis() - lastTempPublish >= 5000) {
     lastTempPublish = millis();
     if (mqttClient.connected()) {
-      mqttClient.publish(TOPIC_TEMP.c_str(), String(readTMP36(), 1).c_str(), true);
+      float currentTemp = readTMP36();
+      mqttClient.publish(TOPIC_TEMP.c_str(), String(currentTemp, 1).c_str(), false);
+    }
+  }
+
+  // แสดงหน้า Welcome 4 วินาที แบบ Non-blocking
+  if (currentState == STATE_WELCOME) {
+    if (millis() - welcomeStartTime >= 4000) {
+      currentState = STATE_MENU;
+      redrawCurrentStateLCD();
     }
   }
 
   char key = scanKeypad();
 
+  // กดปุ่ม '*' เพียงครั้งเดียวเพื่อเปิด/ปิดเครื่อง
+  if (key == '*') {
+    if (currentState == STATE_OFF) {
+      lcd.backlight();
+      resetToVacant();
+    } else if (currentState != STATE_CONFIRM_OFF) {
+      previousStateBeforeOffConfirm = currentState;
+      currentState = STATE_CONFIRM_OFF;
+      redrawCurrentStateLCD();
+    }
+    return;
+  }
+
   if (currentState == STATE_OFF) return;
 
-  // 1. จัดการKeypad
+  // ----------------------------------------------------
+  // 1. จัดการปุ่มกด (Keypad Logic)
   // ----------------------------------------------------
   if (key != 0) {
     lastMovementTime = millis();
 
-    // หน้าถามยืนยัน Turn OFF
     if (currentState == STATE_CONFIRM_OFF) {
-      if (key == 'A') { // A|Yes
+      if (key == 'A') {
         turnOffMachine();
-      } else if (key == 'B') { // B|No
+      } else if (key == 'B') {
         currentState = previousStateBeforeOffConfirm;
         redrawCurrentStateLCD();
       }
@@ -414,16 +469,13 @@ void loop() {
           }
 
           currentState = STATE_WELCOME;
+          welcomeStartTime = millis(); // เริ่มนับเวลา 4 วินาที
           lcd.clear();
           lcd.setCursor(0, 0); lcd.print("   WELCOME TO   ");
           lcd.setCursor(0, 1); lcd.print(" S.E.A.T. SENCE ");
-          delay(5000);
-
-          currentState = STATE_MENU;
-          redrawCurrentStateLCD();
         } else {
           lcd.clear();
-          lcd.setCursor(0, 0); lcd.print("Wrong Password!");
+          lcd.setCursor(0, 0); lcd.print("!Wrong Password!");
           delay(2000);
           inputBuffer = "";
           redrawCurrentStateLCD();
@@ -441,23 +493,37 @@ void loop() {
         if (inputBuffer.length() > 0) {
           officeSyndromeDuration = inputBuffer.toInt() * 60 * 1000UL;
         } else {
-          officeSyndromeDuration = 45 * 60 * 1000UL;
+          officeSyndromeDuration = 45 * 60 * 1000UL; // Default 45 นาที
         }
         startOccupiedSession();
+      } else if (key == 'B') {
+        if (inputBuffer.length() == 0) {
+          currentState = STATE_MENU; // กด B ถอยกลับไปหน้าเมนู
+          redrawCurrentStateLCD();
+        }
       }
     }
     else if (currentState == STATE_OCCUPIED) {
       if (key == 'A') {
-        isPaused = !isPaused;
-        if (isPaused) {
-          pauseStartTime = millis();
+        unsigned long elapsed = isPaused ? (pauseStartTime - officeSyndromeStartTime) : (millis() - officeSyndromeStartTime);
+        if (elapsed >= officeSyndromeDuration) {
+          // หากหมดเวลาแล้วกด A (Again) -> เริ่มนับถอยหลังใหม่
+          startOccupiedSession();
         } else {
-          officeSyndromeStartTime += (millis() - pauseStartTime);
+          // หากอยู่ระหว่างนับถอยหลัง -> Pause / Resume
+          isPaused = !isPaused;
+          if (isPaused) {
+            pauseStartTime = millis();
+          } else {
+            officeSyndromeStartTime += (millis() - pauseStartTime);
+          }
+          lastMins = -1;
+          lastSecs = -1;
         }
       } 
-      else if (key == 'B') {
+      else if (key == 'B') { // กด B (Back) -> ยกเลิก session กลับหน้าตั้งเวลา
         isPaused = false;
-        setRGBColorMode(COLOR_OFF);
+        setRGBColorMode(COLOR_OFF, true);
         currentState = STATE_SET_TIME;
         inputBuffer = "";
         redrawCurrentStateLCD();
@@ -465,16 +531,17 @@ void loop() {
     }
   }
 
-  // 2. การอัปเดตหน้าจอ LCD, RGB
+  // ----------------------------------------------------
+  // 2. การอัปเดตหน้าจอ LCD และไฟ RGB
   // ----------------------------------------------------
   if (millis() - lastLcdUpdate >= 200) {
     lastLcdUpdate = millis();
 
     if (currentState == STATE_SHOW_TEMP) {
       char tempBuf[17];
-      snprintf(tempBuf, sizeof(tempBuf), "Room Temp:%.1fC ", readTMP36());
+      snprintf(tempBuf, sizeof(tempBuf), "RoomTemp: %.1fC ", readTMP36());
       lcd.setCursor(0, 0); lcd.print(tempBuf);
-      lcd.setCursor(0, 1); lcd.print("          B|Back");
+      lcd.setCursor(0, 1); lcd.print("     B|Back     ");
     }
     else if (currentState == STATE_OCCUPIED) {
       unsigned long elapsed;
@@ -489,14 +556,20 @@ void loop() {
         int mins = remaining / 60;
         int secs = remaining % 60;
 
-        char timeBuf[17];
-        snprintf(timeBuf, sizeof(timeBuf), "COUNT DOWN:%02d:%02d", mins, secs);
-        lcd.setCursor(0, 0); lcd.print(timeBuf);
+        if (mins != lastMins || secs != lastSecs || isPaused != lastPauseState) {
+          lastMins = mins;
+          lastSecs = secs;
+          lastPauseState = isPaused;
 
-        if (isPaused) {
-          lcd.setCursor(0, 1); lcd.print("A|Resume  B|Back");
-        } else {
-          lcd.setCursor(0, 1); lcd.print("A|Pause   B|Back");
+          char timeBuf[17];
+          snprintf(timeBuf, sizeof(timeBuf), "COUNT DOWN:%02d:%02d", mins, secs);
+          lcd.setCursor(0, 0); lcd.print(timeBuf);
+
+          if (isPaused) {
+            lcd.setCursor(0, 1); lcd.print("A|Resume  B|Back");
+          } else {
+            lcd.setCursor(0, 1); lcd.print("A|Pause   B|Back");
+          }
         }
 
         if (remaining > 30) {
@@ -505,13 +578,17 @@ void loop() {
           setRGBColorMode(COLOR_RED);
         }
       } else {
-        lcd.setCursor(0, 0); lcd.print("COUNT DOWN:00:00");
-        if (isPaused) {
-          lcd.setCursor(0, 1); lcd.print("A|Resume  B|Back");
-        } else {
-          lcd.setCursor(0, 1); lcd.print("A|Pause   B|Back");
+        // เมื่อหมดเวลา (00:00)
+        if (lastMins != 0 || lastSecs != 0 || isPaused != lastPauseState) {
+          lastMins = 0;
+          lastSecs = 0;
+          lastPauseState = isPaused;
+
+          lcd.setCursor(0, 0); lcd.print(" !!Move Around!!");
+          lcd.setCursor(0, 1); lcd.print("A|Again   B|Back");
         }
 
+        // ไฟสีแดงกระพริบทุกๆ 1 วินาที
         if ((millis() / 1000) % 2 == 0) {
           setRGBColorMode(COLOR_RED);
         } else {
@@ -521,12 +598,13 @@ void loop() {
     }
   }
 
+  // ----------------------------------------------------
   // 3. อ่านค่าเซนเซอร์ Auto-Logout 25 นาที
   // ----------------------------------------------------
   if (millis() - lastSensorRead >= 1000) {
     lastSensorRead = millis();
 
-    float d1 = readUltrasonic(TRIG_1, ECHO_1); delay(30);
+    float d1 = readUltrasonic(TRIG_1, ECHO_1);
     float d2 = readUltrasonic(TRIG_2, ECHO_2);
 
     if ((d1 > 0 && d1 < 80) || (d2 > 0 && d2 < 80)) {
