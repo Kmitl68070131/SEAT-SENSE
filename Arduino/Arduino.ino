@@ -3,23 +3,21 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 
+// 1. ตั้งค่าการเชื่อมต่อ
 // ==========================================
-// 1. ตั้งค่าการเชื่อมต่อ (USER CONFIGURATION)
-// ==========================================
-const char* SECRET_SSID     = "wachi_";       // ชื่อ Wi-Fi
-const char* SECRET_PASS     = "12345678";   // รหัสผ่าน Wi-Fi
-const char* MQTT_BROKER     = "broker.hivemq.com";    // HiveMQ Public Broker
+const char* SECRET_SSID     = "wachi_";             //wifi name
+const char* SECRET_PASS     = "12345678";           //wifi password
+const char* MQTT_BROKER     = "broker.hivemq.com";
 const int   MQTT_PORT       = 1883;
-const char* TABLE_BOARD_ID  = "tableA";               // กำหนดระบุชื่อโต๊ะ: "tableA" หรือ "tableB"
-const unsigned long POWER_HOLD_TIME = 2000;           // กดค้าง 2 วินาทีเพื่อ เปิด/ปิด
+const char* TABLE_BOARD_ID  = "tableA";             // Table name
+const unsigned long POWER_HOLD_TIME = 2000;         // ตั้งเวลากดปุ่ม * ค้างกี่วิ
 
+// 2. การกำหนดขาพอร์ต
 // ==========================================
-// 2. การกำหนดขาพอร์ต (PIN MAPPING)
-// ==========================================
-const int TRIG_1 = 2, ECHO_1 = 3;  // Ultrasonic 1
-const int TRIG_2 = 4, ECHO_2 = 5;  // Ultrasonic 2
-const int TMP36_PIN = A0;          // TMP36 Temp Sensor
-const int LED_R = A1, LED_G = A2, LED_B = A3; // RGB LED (Common Anode)
+const int TRIG_1 = 2, ECHO_1 = 3;             // Ultrasonic 1
+const int TRIG_2 = 4, ECHO_2 = 5;             // Ultrasonic 2
+const int TMP36_PIN = A0;                     // TMP36 Sensor
+const int LED_R = A1, LED_G = A2, LED_B = A3; // RGB LED
 
 const byte ROW_PINS[4] = {6, 7, 8, 9};
 const byte COL_PINS[4] = {10, 11, 12, 13};
@@ -35,8 +33,7 @@ String TOPIC_PIN      = "smartdesk/" + String(TABLE_BOARD_ID) + "/pin";
 String TOPIC_COMMAND  = "smartdesk/" + String(TABLE_BOARD_ID) + "/command";
 String TOPIC_ONLINE   = "smartdesk/" + String(TABLE_BOARD_ID) + "/online";
 
-// ==========================================
-// 3. ตัวแประบบและสถานะ (SYSTEM STATES)
+// 3. ตัวแประบบและสถานะ
 // ==========================================
 enum DeskState {
   STATE_OFF,
@@ -67,7 +64,7 @@ String generatedPin = "";
 String inputBuffer = "";
 bool isPinScreenActive = false;
 
-// ตัวแประบบนับถอยหลังและหยุดเวลา (Pause)
+// ระบบนับถอยหลังและPause
 bool isPaused = false;
 unsigned long pauseStartTime = 0;
 
@@ -79,11 +76,10 @@ unsigned long officeSyndromeStartTime = 0;
 unsigned long officeSyndromeDuration = 45 * 60 * 1000UL;
 unsigned long lastMqttReconnect = 0;
 
-const unsigned long AUTO_LOGOUT_TIMEOUT = 25 * 60 * 1000UL; // 25 นาที คืนที่นั่งอัตโนมัติ
+const unsigned long AUTO_LOGOUT_TIMEOUT = 25 * 60 * 1000UL; //จับเวลา 25 นาที ถ้าไม่มีคนนั่งจะlog out
 float smoothedTemp = -999.0;
 
-// ==========================================
-// 4. ฟังก์ชันไฟ RGB LED (Common Anode Logic)
+// 4. ฟังก์ชันไฟ RGB LED
 // ==========================================
 void setRGBColorMode(LedColorMode mode) {
   digitalWrite(LED_R, (mode == COLOR_RED)   ? LOW : HIGH);
@@ -91,7 +87,6 @@ void setRGBColorMode(LedColorMode mode) {
   digitalWrite(LED_B, (mode == COLOR_BLUE)  ? LOW : HIGH);
 }
 
-// ==========================================
 // 5. ฟังก์ชันสุ่มรหัส PIN (LCG Algorithm)
 // ==========================================
 String generateLCGPin() {
@@ -105,7 +100,6 @@ String generateLCGPin() {
   return String(pinBuf);
 }
 
-// ==========================================
 // 6. ฟังก์ชันอ่านค่าเซนเซอร์
 // ==========================================
 float readUltrasonic(int trigPin, int echoPin) {
@@ -125,13 +119,12 @@ float readTMP36() {
   }
   float avgRaw = (float)sumRaw / 50.0;
   float voltage = avgRaw * (5.0 / 1023.0);
-  float rawTemp = ((voltage - 0.5) * 100.0) + 21.0; // ชดเชยค่า +20.0
+  float rawTemp = ((voltage - 0.5) * 100.0) + 21.0; // ชดเชย +21.0
   if (smoothedTemp == -999.0) smoothedTemp = rawTemp;
   smoothedTemp = (0.05 * rawTemp) + (0.95 * smoothedTemp);
   return smoothedTemp;
 }
 
-// ==========================================
 // 7. ฟังก์ชันเปิด/ปิด เครื่อง (Power ON/OFF)
 // ==========================================
 void resetToVacant() {
@@ -164,7 +157,6 @@ void turnOffMachine() {
   }
 }
 
-// ==========================================
 // 8. การรับสัญญาณ MQTT (MQTT Callback)
 // ==========================================
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
@@ -196,8 +188,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   }
 }
 
-// ==========================================
-// 9. การจัดการเชื่อมต่อ MQTT (Non-blocking + LWT)
+// 9. การจัดการเชื่อมต่อ MQTT
 // ==========================================
 void maintainMqttConnection() {
   if (!mqttClient.connected()) {
@@ -219,8 +210,7 @@ void maintainMqttConnection() {
   }
 }
 
-// ==========================================
-// 10. การสแกน Keypad Manual
+// 10. การสแกน Keypad
 // ==========================================
 char scanKeypad() {
   char keys[4][4] = {
@@ -238,14 +228,14 @@ char scanKeypad() {
         unsigned long pressStart = millis();
 
         while(digitalRead(COL_PINS[c]) == LOW) {
-          if (r == 3 && c == 0) { // ปุ่ม '*' กดค้าง 2 วินาที
+          if (r == 3 && c == 0) { // ปุ่ม '*' กดค้าง
             if (millis() - pressStart >= POWER_HOLD_TIME) {
               if (currentState == STATE_OFF) {
-                // ถ้าเครื่องปิดอยู่ ให้กดค้างเพื่อเปิดเครื่อง
+                // ถ้าเครื่องปิดอยู่ จะเปิดเครื่อง
                 lcd.backlight();
                 resetToVacant();
               } else if (currentState != STATE_CONFIRM_OFF) {
-                // ถ้าเครื่องเปิดอยู่ ให้เข้าสู่หน้าถามยืนยัน Turn OFF
+                // ถ้าเครื่องเปิดอยู่ จะถามว่าแน่ใจมั้ย
                 previousStateBeforeOffConfirm = currentState;
                 currentState = STATE_CONFIRM_OFF;
                 lcd.clear();
@@ -316,7 +306,6 @@ void startOccupiedSession() {
   lcd.clear();
 }
 
-// ==========================================
 // 11. SETUP & LOOP
 // ==========================================
 void setup() {
@@ -365,17 +354,16 @@ void loop() {
 
   if (currentState == STATE_OFF) return;
 
-  // ----------------------------------------------------
-  // 1. จัดการปุ่มกด (Keypad Logic)
+  // 1. จัดการKeypad
   // ----------------------------------------------------
   if (key != 0) {
     lastMovementTime = millis();
 
-    // --- หน้าถามยืนยัน Turn OFF ---
+    // หน้าถามยืนยัน Turn OFF
     if (currentState == STATE_CONFIRM_OFF) {
-      if (key == 'A') { // A|Yes -> ยืนยันปิดเครื่อง
+      if (key == 'A') { // A|Yes
         turnOffMachine();
-      } else if (key == 'B') { // B|No -> ยกเลิกการปิดเครื่อง กลับหน้าเดิม
+      } else if (key == 'B') { // B|No
         currentState = previousStateBeforeOffConfirm;
         redrawCurrentStateLCD();
       }
@@ -477,8 +465,7 @@ void loop() {
     }
   }
 
-  // ----------------------------------------------------
-  // 2. การอัปเดตหน้าจอ LCD & ไฟ RGB
+  // 2. การอัปเดตหน้าจอ LCD, RGB
   // ----------------------------------------------------
   if (millis() - lastLcdUpdate >= 200) {
     lastLcdUpdate = millis();
@@ -534,7 +521,6 @@ void loop() {
     }
   }
 
-  // ----------------------------------------------------
   // 3. อ่านค่าเซนเซอร์ Auto-Logout 25 นาที
   // ----------------------------------------------------
   if (millis() - lastSensorRead >= 1000) {
