@@ -1,30 +1,22 @@
-/*
-  ================================================================================
-  Smart Desk IoT System - Arduino UNO R4 WiFi (Updated Keypad, LCD & Timeout)
-  ================================================================================
-*/
-
 #include <WiFiS3.h>
 #include <PubSubClient.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 
-// ==========================================
 // 1. ตั้งค่าการเชื่อมต่อ (USER CONFIGURATION)
 // ==========================================
-const char* SECRET_SSID     = "wachi_";             // Wi-Fi SSID
-const char* SECRET_PASS     = "12345678";           // Wi-Fi Password
-const char* MQTT_BROKER     = "broker.hivemq.com";  // HiveMQ Public Broker
-const int   MQTT_PORT       = 1883;                 // Port TCP 1883
-const char* TABLE_BOARD_ID  = "tableA";             // ชื่อโต๊ะ (tableA, tableB, ฯลฯ)
+const char* SECRET_SSID     = "wachi_";             // wifi name
+const char* SECRET_PASS     = "12345678";           // wifi Password
+const char* MQTT_BROKER     = "broker.hivemq.com";
+const int   MQTT_PORT       = 1883;
+const char* TABLE_BOARD_ID  = "tableA";             // ชื่อโต๊ะ 
 
-// ==========================================
 // 2. การกำหนดขาพอร์ต (PIN MAPPING)
 // ==========================================
 const int TRIG_1 = 2, ECHO_1 = 3;  // Ultrasonic 1
 const int TRIG_2 = 4, ECHO_2 = 5;  // Ultrasonic 2
 const int TMP36_PIN = A0;          // TMP36 Temp Sensor
-const int LED_R = A1, LED_G = A2, LED_B = A3; // RGB LED (Common Anode)
+const int LED_R = A1, LED_G = A2, LED_B = A3; // RGB LED
 
 const byte ROW_PINS[4] = {6, 7, 8, 9};
 const byte COL_PINS[4] = {10, 11, 12, 13};
@@ -33,14 +25,13 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
 
-// MQTT Topics
+//Topics
 String TOPIC_STATUS   = "smartdesk/" + String(TABLE_BOARD_ID) + "/status";
 String TOPIC_TEMP     = "smartdesk/" + String(TABLE_BOARD_ID) + "/temp";
 String TOPIC_PIN      = "smartdesk/" + String(TABLE_BOARD_ID) + "/pin";
 String TOPIC_COMMAND  = "smartdesk/" + String(TABLE_BOARD_ID) + "/command";
 String TOPIC_ONLINE   = "smartdesk/" + String(TABLE_BOARD_ID) + "/online";
 
-// ==========================================
 // 3. ตัวแประบบและสถานะ (SYSTEM STATES)
 // ==========================================
 enum DeskState {
@@ -75,10 +66,10 @@ String generatedPin = "";
 String inputBuffer = "";
 bool isPinScreenActive = false;
 
-// ตัวแประบบนับเวลาหน้า Welcome (Non-blocking)
+// ตัวแประบบนับเวลาหน้า
 unsigned long welcomeStartTime = 0;
 
-// ตัวแประบบนับถอยหลังและหยุดเวลา (Pause)
+// ตัวแประบบนับถอยหลังและPause
 bool isPaused = false;
 unsigned long pauseStartTime = 0;
 int lastMins = -1;
@@ -93,15 +84,14 @@ unsigned long officeSyndromeStartTime = 0;
 unsigned long officeSyndromeDuration = 45 * 60 * 1000UL;
 unsigned long lastMqttReconnect = 0;
 
-const unsigned long AUTO_LOGOUT_TIMEOUT = 25 * 60 * 1000UL; // 25 นาที คืนที่นั่งอัตโนมัติ
+const unsigned long AUTO_LOGOUT_TIMEOUT = 25 * 60 * 1000UL; // 25 นาที แล้วlogout
 float smoothedTemp = -999.0;
 
-// ตัวแปรสำหรับสแกน Keypad แบบ Non-blocking (Debounce)
+// ตัวแปรสำหรับสแกน Keypad แบบ Non-blocking
 char lastKeyPressed = 0;
 unsigned long keyPressTime = 0;
 bool keyHandled = false;
 
-// ==========================================
 // 4. ฟังก์ชันไฟ RGB LED (Common Anode Logic)
 // ==========================================
 void setRGBColorMode(LedColorMode mode, bool force = false) {
@@ -112,7 +102,6 @@ void setRGBColorMode(LedColorMode mode, bool force = false) {
   digitalWrite(LED_B, (mode == COLOR_BLUE)  ? LOW : HIGH);
 }
 
-// ==========================================
 // 5. ฟังก์ชันสุ่มรหัส PIN (LCG Algorithm)
 // ==========================================
 String generateLCGPin() {
@@ -126,7 +115,6 @@ String generateLCGPin() {
   return String(pinBuf);
 }
 
-// ==========================================
 // 6. ฟังก์ชันอ่านค่าเซนเซอร์
 // ==========================================
 float readUltrasonic(int trigPin, int echoPin) {
@@ -152,7 +140,6 @@ float readTMP36() {
   return smoothedTemp;
 }
 
-// ==========================================
 // 7. ฟังก์ชันเปิด/ปิด เครื่อง (Power ON/OFF)
 // ==========================================
 void resetToVacant() {
@@ -187,7 +174,6 @@ void turnOffMachine() {
   }
 }
 
-// ==========================================
 // 8. การอัปเดตหน้าจอ LCD ของสถานะต่างๆ
 // ==========================================
 void redrawCurrentStateLCD() {
@@ -233,7 +219,6 @@ void redrawCurrentStateLCD() {
   }
 }
 
-// ==========================================
 // 9. การรับสัญญาณและการจัดการ MQTT
 // ==========================================
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
@@ -282,7 +267,6 @@ void maintainMqttConnection() {
   }
 }
 
-// ==========================================
 // 10. การสแกน Keypad แบบ Non-blocking (Single Press)
 // ==========================================
 char scanKeypad() {
@@ -335,7 +319,6 @@ void startOccupiedSession() {
   lcd.clear();
 }
 
-// ==========================================
 // 11. SETUP & LOOP
 // ==========================================
 void setup() {
@@ -409,7 +392,6 @@ void loop() {
 
   if (currentState == STATE_OFF) return;
 
-  // ----------------------------------------------------
   // 1. จัดการปุ่มกด (Keypad Logic)
   // ----------------------------------------------------
   if (key != 0) {
@@ -531,7 +513,6 @@ void loop() {
     }
   }
 
-  // ----------------------------------------------------
   // 2. การอัปเดตหน้าจอ LCD และไฟ RGB
   // ----------------------------------------------------
   if (millis() - lastLcdUpdate >= 200) {
@@ -598,7 +579,6 @@ void loop() {
     }
   }
 
-  // ----------------------------------------------------
   // 3. อ่านค่าเซนเซอร์ Auto-Logout 25 นาที
   // ----------------------------------------------------
   if (millis() - lastSensorRead >= 1000) {
