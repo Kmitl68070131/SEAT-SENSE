@@ -4,8 +4,8 @@ Ultrasonic1 Trig : D2
 Ultrasonic2 Trig : D4
             Echo : D5
 
-I2C LCD     SDA : SDA (A4)
-            SCL : SCL (A5)
+I2C LCD     SDA : A4
+            SCL : A5
 
 Keypad      Row1 : D6
             Row2 : D7
