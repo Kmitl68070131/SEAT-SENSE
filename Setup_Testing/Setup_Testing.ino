@@ -6,6 +6,7 @@ Ultrasonic2 Trig : D4
 
 I2C LCD     SDA : SDA (A4)
             SCL : SCL (A5)
+
 Keypad      Row1 : D6
             Row2 : D7
             Row3 : D8
@@ -16,6 +17,10 @@ Keypad      Row1 : D6
             Col4 : D13
 
 TMP         Vout : A0
+
+RGB LED     R : A1
+            G : A2
+            B : A3
 */
 
 #include <Wire.h>
@@ -32,6 +37,11 @@ const int ECHO_2 = 5;
 
 const int TMP36_PIN = A0;
 
+// ขา RGB LED (Common Anode)
+const int LED_R = A1;
+const int LED_G = A2;
+const int LED_B = A3;
+
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 // ==========================================
@@ -40,6 +50,18 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 unsigned long lastSensorRead = 0;
 const long sensorInterval = 1000; // อ่านค่าเซนเซอร์ทุกๆ 1 วินาที
 char currentKeyPressed = '-';     // เก็บสถานะปุ่มกดปัจจุบัน (เริ่มต้นเป็น '-')
+
+// ตัวแประบบทดสอบ RGB LED
+unsigned long lastRgbChange = 0;
+const long rgbInterval = 1000;    // สลับสีทุก 1 วินาที (1000ms)
+int rgbState = 0;                 // 0 = Red, 1 = Green, 2 = Blue
+
+// ฟังก์ชันเปิดสี RGB (Common Anode: LOW = ติด, HIGH = ดับ)
+void setRGBColor(bool red, bool green, bool blue) {
+  digitalWrite(LED_R, red ? LOW : HIGH);
+  digitalWrite(LED_G, green ? LOW : HIGH);
+  digitalWrite(LED_B, blue ? LOW : HIGH);
+}
 
 // ฟังก์ชันอ่านระยะทาง Ultrasonic (cm)
 float readUltrasonic(int trigPin, int echoPin) {
@@ -129,6 +151,12 @@ void setup() {
   pinMode(TRIG_2, OUTPUT);
   pinMode(ECHO_2, INPUT);
 
+  // ตั้งค่าขา RGB LED
+  pinMode(LED_R, OUTPUT);
+  pinMode(LED_G, OUTPUT);
+  pinMode(LED_B, OUTPUT);
+  setRGBColor(false, false, false); // ปิดไฟทั้งหมดก่อนเริ่มต้น
+
   // ตั้งค่าขา Keypad (Rows 6-9 เป็น OUTPUT, Cols 10-13 เป็น INPUT_PULLUP)
   for (int i = 6; i <= 9; i++) {
     pinMode(i, OUTPUT);
@@ -196,7 +224,24 @@ void loop() {
   }
 
   // ----------------------------------------------------
-  // 2. อ่านค่าเซนเซอร์และอัปเดตหน้าจอ LCD ทุกๆ 1 วินาที
+  // 2. ทดสอบสลับสี RGB LED ทุกๆ 1 วินาที (แดง -> เขียว -> น้ำเงิน)
+  // ----------------------------------------------------
+  if (millis() - lastRgbChange >= rgbInterval) {
+    lastRgbChange = millis();
+
+    if (rgbState == 0) {
+      setRGBColor(true, false, false); // สีแดง
+    } else if (rgbState == 1) {
+      setRGBColor(false, true, false); // สีเขียว
+    } else if (rgbState == 2) {
+      setRGBColor(false, false, true); // สีน้ำเงิน
+    }
+
+    rgbState = (rgbState + 1) % 3; // วนรอบสเตท 0 -> 1 -> 2 -> 0
+  }
+
+  // ----------------------------------------------------
+  // 3. อ่านค่าเซนเซอร์และอัปเดตหน้าจอ LCD ทุกๆ 1 วินาที
   // ----------------------------------------------------
   if (millis() - lastSensorRead >= sensorInterval) {
     lastSensorRead = millis();
@@ -221,5 +266,7 @@ void loop() {
     Serial.println(" C");
 
     updateLCD(dist1, dist2, temp);
+
+
   }
 }
