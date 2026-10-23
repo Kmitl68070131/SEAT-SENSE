@@ -39,7 +39,7 @@
 
     <script>
         const broker = "broker.hivemq.com";
-        const port = 8884;
+        const port = 8884; // เปลี่ยนจาก 8000 เป็น 8884 สำหรับ HTTPS/WSS
         const clientID = "web_client_" + Math.random().toString(16).substr(2, 8);
 
         const boardsData = {};
@@ -49,14 +49,23 @@
         client.onConnectionLost = onConnectionLost;
         client.onMessageArrived = onMessageArrived;
 
-        client.connect({ onSuccess: onConnect });
+        // เปิดใช้งาน useSSL: true เพื่อรองรับการรันบน HTTPS (GitHub Pages)
+        client.connect({ 
+            onSuccess: onConnect,
+            onFailure: onConnectFailure,
+            useSSL: true 
+        });
 
         function onConnect() {
-            console.log("MQTT Connected!");
+            console.log("MQTT Connected successfully via SSL!");
             client.subscribe("smartdesk/+/status");
             client.subscribe("smartdesk/+/temp");
             client.subscribe("smartdesk/+/pin");
             client.subscribe("smartdesk/+/online");
+        }
+
+        function onConnectFailure(responseObject) {
+            console.error("MQTT Connection Failed: " + responseObject.errorMessage);
         }
 
         function onConnectionLost(responseObject) {
