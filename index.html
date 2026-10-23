@@ -123,21 +123,37 @@
   // ---------- ตั้งค่า ----------
   const BROKER = "broker.hivemq.com";
   const PORT = 8884; // WSS
-  const DESKS = ["table-A", "table-B"]; // ต้องตรงกับ TABLE_BOARD_ID ในบอร์ดแต่ละตัว
 
-  // ---------- ข้อมูลโต๊ะ ----------
-  const boards = {};
-  DESKS.forEach(id => boards[id] = { online: false, status: "VACANT", temp: "--", pin: "-" });
+  const boardsData = {};
+  const container = document.getElementById("desk-container");
+  const connEl = document.getElementById("conn");
+
+  // ---------- จำว่าเครื่องนี้เป็นคนกดจองโต๊ะไหน ----------
+  function setMyBooking(boardId, isBooked) {
+    try {
+      if (isBooked) sessionStorage.setItem("booked_" + boardId, "true");
+      else sessionStorage.removeItem("booked_" + boardId);
+    } catch (e) {}
+  }
+  function isMyBooking(boardId) {
+    try { return sessionStorage.getItem("booked_" + boardId) === "true"; }
+    catch (e) { return false; }
+  }
 
   function deskName(id) { return "โต๊ะ " + id.replace(/^table-/i, "").toUpperCase(); }
 
-  function buildCard(id) {
-    const card = document.createElement("div");
+  // ---------- การ์ดโต๊ะ ----------
+  function getOrCreateCard(boardId) {
+    let card = document.getElementById("desk-" + boardId);
+    if (card) return card;
+
+    card = document.createElement("div");
     card.className = "card is-off";
-    card.id = "desk-" + id;
+    card.id = "desk-" + boardId;
+    card.dataset.board = boardId;
     card.innerHTML =
       '<div class="tape"></div>' +
-      '<h2><span></span><span class="net">ออฟไลน์</span></h2>' +
+      '<h2><span class="name"></span><span class="net">ออฟไลน์</span></h2>' +
       '<div class="status"><span class="emo"></span><div><div class="t1"></div><div class="t2"></div></div></div>' +
       '<div class="row"><span>🌡️ อุณหภูมิห้อง</span><b class="temp">--</b></div>' +
       '<div class="pin hidden"></div>' +
@@ -145,76 +161,91 @@
         '<button class="btn book" disabled>📌 จองโต๊ะ</button>' +
         '<button class="btn logout" disabled>👋 คืนโต๊ะ</button>' +
       '</div>';
-    card.querySelector("h2 span").textContent = "🪑 " + deskName(id);
-    card.querySelector(".book").addEventListener("click", () => sendCommand(id, "BOOK"));
-    card.querySelector(".logout").addEventListener("click", () => sendCommand(id, "LOGOUT"));
+    card.querySelector(".name").textContent = "🪑 " + deskName(boardId);
+    card.querySelector(".book").addEventListener("click", () => sendBooking(boardId));
+    card.querySelector(".logout").addEventListener("click", () => sendLogout(boardId));
+    container.appendChild(card);
+
+    // เรียงการ์ดตามชื่อ A, B, C ...
+    Array.from(container.children)
+      .sort((a, b) => a.dataset.board.localeCompare(b.dataset.board))
+      .forEach(el => container.appendChild(el));
     return card;
   }
 
-  // สถานะที่แสดงบนเว็บ: off / vacant / booked (จองแล้ว รอใส่รหัส) / inuse (ใส่รหัสแล้ว)
+  // สถานะที่แสดงบนเว็บ: off / vacant / booked (รอใส่รหัส) / inuse (ใส่รหัสแล้ว)
   function viewState(d) {
     if (!d.online || d.status === "OFF") return "off";
     if (d.status === "VACANT") return "vacant";
-    // ใส่รหัสเสร็จ บอร์ดจะส่ง pin = "unavailable" (หรือ status = OCCUPIED)
+    // ใส่รหัสถูกแล้ว บอร์ดจะส่ง pin = "unavailable" (หรือ status = OCCUPIED)
     if (d.pin === "unavailable" || d.status === "OCCUPIED") return "inuse";
     return "booked";
   }
 
-  const VIEW = {
-    off:    { cls: "is-off",    emo: "😴", t1: "ไม่พร้อมใช้งาน",  t2: "โต๊ะนี้ปิดอยู่หรือหลุดการเชื่อมต่อ" },
-    vacant: { cls: "is-vacant", emo: "✨", t1: "ว่าง",            t2: "กดจองได้เลย" },
-    booked: { cls: "is-booked", emo: "🔑", t1: "จองแล้ว",         t2: "รอใส่รหัสที่หน้าโต๊ะ" },
-    inuse:  { cls: "is-inuse",  emo: "🔒", t1: "จองแล้ว",         t2: "มีคนนั่งทำงานอยู่" }
-  };
-
-  function render(id) {
-    const d = boards[id];
-    const card = document.getElementById("desk-" + id);
+  function updateBoardUI(boardId) {
+    const d = boardsData[boardId];
+    if (!d) return;
+    const card = getOrCreateCard(boardId);
     const v = viewState(d);
-    const info = VIEW[v];
+    const mine = isMyBooking(boardId);
 
-    card.className = "card " + info.cls;
+    let cls, emo, t1, t2;
+    if (v === "off") {
+      cls = "is-off"; emo = "😴"; t1 = "ไม่พร้อมใช้งาน"; t2 = "โต๊ะนี้ปิดอยู่หรือหลุดการเชื่อมต่อ";
+    } else if (v === "vacant") {
+      cls = "is-vacant"; emo = "✨"; t1 = "ว่าง"; t2 = "กดจองได้เลย";
+    } else if (v === "booked") {
+      cls = "is-booked"; emo = "🔑"; t1 = "จองแล้ว";
+      t2 = mine ? "รอใส่รหัสที่หน้าโต๊ะ" : "มีคนจองไว้แล้ว";
+    } else {
+      cls = "is-inuse"; emo = "🔒"; t1 = "จองแล้ว";
+      t2 = mine ? "คุณกำลังใช้โต๊ะนี้อยู่" : "มีคนนั่งทำงานอยู่";
+    }
+
+    card.className = "card " + cls;
     card.querySelector(".net").textContent = d.online ? "🟢 ออนไลน์" : "ออฟไลน์";
-    card.querySelector(".emo").textContent = info.emo;
-    card.querySelector(".t1").textContent = info.t1;
-    card.querySelector(".t2").textContent = info.t2;
+    card.querySelector(".emo").textContent = emo;
+    card.querySelector(".t1").textContent = t1;
+    card.querySelector(".t2").textContent = t2;
     card.querySelector(".temp").textContent = (d.online && d.temp !== "--") ? d.temp + " °C" : "--";
 
+    // PIN: โชว์เฉพาะตอนรอใส่รหัส เครื่องที่จองเห็นเลขจริง เครื่องอื่นเห็น ****
     const pinEl = card.querySelector(".pin");
     if (v === "booked") {
-      pinEl.textContent = /^\d{4}$/.test(d.pin) ? d.pin : "----";
+      pinEl.textContent = mine ? (/^\d{4}$/.test(d.pin) ? d.pin : "----") : "****";
       pinEl.classList.remove("hidden");
     } else {
       pinEl.classList.add("hidden");
     }
 
-    card.querySelector(".book").disabled   = (v !== "vacant");
-    card.querySelector(".logout").disabled = (v !== "booked" && v !== "inuse");
+    card.querySelector(".book").disabled = (v !== "vacant");
+    card.querySelector(".logout").disabled = !((v === "booked" || v === "inuse") && mine);
 
     renderSummary();
   }
 
   function renderSummary() {
-    const free = DESKS.filter(id => viewState(boards[id]) === "vacant").length;
-    document.getElementById("summary").textContent = "✨ ว่าง " + free + " จาก " + DESKS.length + " โต๊ะ";
+    const ids = Object.keys(boardsData).filter(id => boardsData[id].hasBeenOnline);
+    const el = document.getElementById("summary");
+    if (ids.length === 0) { el.textContent = "😴 ยังไม่มีโต๊ะออนไลน์"; return; }
+    const free = ids.filter(id => viewState(boardsData[id]) === "vacant").length;
+    el.textContent = "✨ ว่าง " + free + " จาก " + ids.length + " โต๊ะ";
   }
 
   // ---------- MQTT ----------
   const client = new Paho.MQTT.Client(BROKER, PORT, "web_client_" + Math.random().toString(16).slice(2, 10));
-  const connEl = document.getElementById("conn");
-
-  client.onConnectionLost = r => {
+  client.onConnectionLost = () => {
     connEl.textContent = "⚠️ หลุดการเชื่อมต่อ กำลังต่อใหม่…";
     setTimeout(connect, 3000);
   };
-  client.onMessageArrived = onMessage;
+  client.onMessageArrived = onMessageArrived;
 
   function connect() {
     client.connect({
       useSSL: true,
       onSuccess: () => {
         connEl.textContent = "✅ เชื่อมต่อเซิร์ฟเวอร์แล้ว";
-        DESKS.forEach(id => ["status", "temp", "pin", "online"].forEach(t => client.subscribe("smartdesk/" + id + "/" + t)));
+        ["status", "temp", "pin", "online"].forEach(t => client.subscribe("smartdesk/+/" + t));
       },
       onFailure: e => {
         connEl.textContent = "❌ เชื่อมต่อไม่ได้ ลองรีเฟรชหน้านี้";
@@ -223,32 +254,51 @@
     });
   }
 
-  function onMessage(msg) {
-    const parts = msg.destinationName.split("/");
+  function onMessageArrived(message) {
+    const parts = message.destinationName.split("/");
     if (parts.length < 3 || parts[0] !== "smartdesk") return;
-    const id = parts[1], type = parts[2], payload = msg.payloadString;
-    if (!boards[id]) return;
+    const boardId = parts[1], type = parts[2], payload = message.payloadString;
 
-    const d = boards[id];
-    if (type === "online") d.online = (payload === "ONLINE");
-    else if (type === "status") {
-      d.status = payload;
-      if (payload === "VACANT") d.pin = "-";
+    if (!boardsData[boardId]) {
+      boardsData[boardId] = { online: false, hasBeenOnline: false, status: "VACANT", temp: "--", pin: "----" };
     }
-    else if (type === "temp") d.temp = payload;
-    else if (type === "pin") d.pin = payload;
-    render(id);
+    const d = boardsData[boardId];
+
+    if (type === "online") {
+      d.online = (payload === "ONLINE");
+      if (d.online) d.hasBeenOnline = true;
+    } else if (type === "status") {
+      d.status = payload;
+      if (payload === "VACANT" || payload === "OFF") {
+        d.pin = "----";
+        setMyBooking(boardId, false); // โต๊ะว่างแล้ว ล้างสิทธิ์การจอง
+      }
+    } else if (type === "temp") {
+      d.temp = payload;
+    } else if (type === "pin") {
+      d.pin = payload;
+    }
+
+    // แสดงการ์ดเฉพาะโต๊ะที่เคยออนไลน์แล้วเท่านั้น
+    if (d.hasBeenOnline) updateBoardUI(boardId);
   }
 
-  function sendCommand(id, cmd) {
-    const m = new Paho.MQTT.Message(cmd);
-    m.destinationName = "smartdesk/" + id + "/command";
+  function sendBooking(boardId) {
+    setMyBooking(boardId, true);
+    const m = new Paho.MQTT.Message("BOOK");
+    m.destinationName = "smartdesk/" + boardId + "/command";
+    client.send(m);
+  }
+
+  function sendLogout(boardId) {
+    setMyBooking(boardId, false);
+    const m = new Paho.MQTT.Message("LOGOUT");
+    m.destinationName = "smartdesk/" + boardId + "/command";
     client.send(m);
   }
 
   // ---------- เริ่มทำงาน ----------
-  const container = document.getElementById("desk-container");
-  DESKS.forEach(id => { container.appendChild(buildCard(id)); render(id); });
+  renderSummary();
   connect();
 </script>
 </body>
