@@ -1,305 +1,303 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Smart Desk 🪑 จองโต๊ะทำงาน</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Mali:wght@500;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --ink: #1d2a44;
-    --paper: #e3eefa;
-    --grid: #c9dcef;
-    --mint: #bdecc9;
-    --sun: #ffe38a;
-    --coral: #ffb9aa;
-    --fog: #dfe3ea;
-    --white: #ffffff;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; padding: 28px 16px 48px;
-    font-family: 'Sarabun', 'Segoe UI', Tahoma, sans-serif;
-    color: var(--ink);
-    background-color: var(--paper);
-    background-image:
-      linear-gradient(var(--grid) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-    background-size: 28px 28px;
-    min-height: 100vh;
-  }
-  header { text-align: center; margin-bottom: 30px; }
-  h1 {
-    font-family: 'Mali', 'Sarabun', sans-serif; font-weight: 700;
-    font-size: clamp(26px, 5vw, 38px); margin: 0 0 10px;
-  }
-  .sub { margin: 0 0 14px; font-size: 16px; }
-  .pill {
-    display: inline-block; background: var(--white);
-    border: 2.5px solid var(--ink); border-radius: 999px;
-    padding: 5px 16px; font-weight: 700; font-size: 15px;
-    box-shadow: 3px 3px 0 var(--ink);
-  }
-  .conn { margin-top: 10px; font-size: 14px; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Smart Desk Booking & Monitoring System</title>
+    <!-- Paho MQTT WebSocket Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Mali:wght@500;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #1d2a44;
+            --paper: #e3eefa;
+            --grid: #c9dcef;
+            --mint: #bdecc9;
+            --sun: #ffe38a;
+            --coral: #ffb9aa;
+            --fog: #dfe3ea;
+            --white: #ffffff;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Sarabun', 'Segoe UI', Tahoma, sans-serif;
+            margin: 0; padding: 28px 16px 48px; min-height: 100vh;
+            color: var(--ink);
+            background-color: var(--paper);
+            background-image:
+                linear-gradient(var(--grid) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+            background-size: 28px 28px;
+        }
+        h1 {
+            font-family: 'Mali', 'Sarabun', sans-serif; font-weight: 700;
+            text-align: center; font-size: clamp(24px, 5vw, 36px);
+            margin: 0 0 40px;
+        }
+        .container { display: flex; justify-content: center; gap: 34px; flex-wrap: wrap; }
 
-  .container { display: flex; justify-content: center; flex-wrap: wrap; gap: 34px; }
+        .card {
+            position: relative; width: 330px; padding: 24px 20px 20px;
+            background: var(--mint); border: 3px solid var(--ink); border-radius: 22px;
+            box-shadow: 7px 7px 0 var(--ink); transition: background-color 0.3s ease;
+        }
+        .card:nth-child(odd)  { transform: rotate(-1.2deg); }
+        .card:nth-child(even) { transform: rotate(1deg); }
+        .card::before {
+            content: ""; position: absolute; top: -14px; left: 50%;
+            width: 90px; height: 26px; transform: translateX(-50%) rotate(-3deg);
+            background: rgba(255,255,255,0.75); border: 2px solid var(--ink); border-radius: 4px;
+        }
+        /* สีการ์ดตามสถานะ (ไม่ต้องแก้ JS) */
+        .card:has(.status-box.booked)   { background: var(--sun); }
+        .card:has(.status-box.occupied) { background: var(--coral); }
+        .card:has(.status-box.off)      { background: var(--fog); }
+        .card.offline-card { background: var(--fog); opacity: 0.8; }
 
-  .card {
-    position: relative; width: 330px; padding: 22px 20px 20px;
-    background: var(--white); border: 3px solid var(--ink); border-radius: 22px;
-    box-shadow: 7px 7px 0 var(--ink);
-  }
-  .card:nth-child(odd)  { transform: rotate(-1.2deg); }
-  .card:nth-child(even) { transform: rotate(1deg); }
-  .card.is-vacant { background: var(--mint); }
-  .card.is-booked { background: var(--sun); }
-  .card.is-inuse  { background: var(--coral); }
-  .card.is-off    { background: var(--fog); }
+        .card h2 {
+            font-family: 'Mali', 'Sarabun', sans-serif; font-size: 22px;
+            margin: 6px 0 14px; display: flex; justify-content: space-between;
+            align-items: center; gap: 8px;
+        }
+        .online-tag {
+            font-family: 'Sarabun', sans-serif; font-size: 13px; font-weight: 700;
+            padding: 2px 10px; border-radius: 999px;
+            background: var(--white); border: 2px solid var(--ink); color: var(--ink);
+        }
+        .online-tag.online::before  { content: "🟢 "; }
+        .online-tag.offline::before { content: "⚪ "; }
 
-  .tape {
-    position: absolute; top: -14px; left: 50%; width: 90px; height: 26px;
-    transform: translateX(-50%) rotate(-3deg);
-    background: rgba(255,255,255,.75); border: 2px solid var(--ink); border-radius: 4px;
-  }
-  .card h2 {
-    font-family: 'Mali', 'Sarabun', sans-serif; font-size: 24px; margin: 6px 0 14px;
-    display: flex; justify-content: space-between; align-items: center; gap: 8px;
-  }
-  .net {
-    font-family: 'Sarabun', sans-serif; font-size: 13px; font-weight: 700;
-    background: var(--white); border: 2px solid var(--ink); border-radius: 999px; padding: 2px 10px;
-  }
+        .status-box {
+            font-weight: 700; padding: 10px; border-radius: 16px; text-align: center;
+            margin: 12px 0; font-size: 19px;
+            background: var(--white); border: 2.5px solid var(--ink); color: var(--ink);
+        }
+        .status-box::before { margin-right: 6px; font-size: 24px; vertical-align: -2px; }
+        .status-box.vacant::before   { content: "✨"; }
+        .status-box.booked::before   { content: "🔑"; }
+        .status-box.occupied::before { content: "🔒"; }
+        .status-box.off::before      { content: "😴"; }
 
-  .status {
-    display: flex; align-items: center; gap: 12px;
-    background: var(--white); border: 2.5px solid var(--ink); border-radius: 16px;
-    padding: 10px 14px; margin-bottom: 14px;
-  }
-  .status .emo { font-size: 38px; line-height: 1; }
-  .status .t1 { font-weight: 700; font-size: 19px; }
-  .status .t2 { font-size: 13px; opacity: .8; }
+        .info-group { margin: 8px 2px; font-size: 16px; }
+        .info-group:has(#temp-table)::before { content: ""; }
+        .pin-box {
+            font-family: 'Mali', sans-serif; font-size: 28px; font-weight: 700;
+            color: var(--ink); text-align: center; background: var(--white);
+            padding: 8px; border: 2.5px dashed var(--ink); border-radius: 14px;
+            margin: 10px 0 14px; letter-spacing: 6px;
+        }
 
-  .row { display: flex; justify-content: space-between; align-items: center; margin: 8px 2px; font-size: 16px; }
-  .row b { font-size: 18px; }
+        .btn {
+            width: 100%; padding: 11px; margin-top: 10px; font-size: 17px; font-weight: 700;
+            font-family: 'Sarabun', sans-serif; color: var(--ink); background: var(--white);
+            border: 2.5px solid var(--ink); border-radius: 14px; cursor: pointer;
+            box-shadow: 3px 3px 0 var(--ink); transition: transform 0.08s, box-shadow 0.08s;
+        }
+        .btn:hover:not(:disabled) { background: #fffbe8; }
+        .btn:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
+        .btn:focus-visible { outline: 3px solid #2f6fed; outline-offset: 2px; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
 
-  .pin {
-    text-align: center; font-family: 'Mali', sans-serif; font-weight: 700;
-    font-size: 30px; letter-spacing: 8px; padding: 8px 0 8px 8px; margin: 10px 0 14px;
-    background: var(--white); border: 2.5px dashed var(--ink); border-radius: 14px;
-  }
-  .pin.hidden { display: none; }
-
-  .btns { display: grid; gap: 10px; }
-  .btn {
-    font-family: 'Sarabun', sans-serif; font-weight: 700; font-size: 17px;
-    padding: 11px; color: var(--ink); background: var(--white);
-    border: 2.5px solid var(--ink); border-radius: 14px; cursor: pointer;
-    box-shadow: 3px 3px 0 var(--ink);
-    transition: transform .08s, box-shadow .08s;
-  }
-  .btn:hover:not(:disabled) { background: #fffbe8; }
-  .btn:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
-  .btn:focus-visible { outline: 3px solid #2f6fed; outline-offset: 2px; }
-  .btn:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
-
-  @media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
-  @media (max-width: 400px) { .card { width: 100%; } }
-</style>
+        @media (prefers-reduced-motion: reduce) { .btn, .card { transition: none; } }
+        @media (max-width: 400px) { .card { width: 100%; } }
+    </style>
 </head>
 <body>
 
-<header>
-  <h1>🪑 ระบบจองโต๊ะทำงาน ☕</h1>
-  <p class="sub">เลือกโต๊ะที่ว่าง กดจอง แล้วไปใส่รหัสที่หน้าโต๊ะได้เลย</p>
-  <span class="pill" id="summary">กำลังโหลด… ⏳</span>
-  <div class="conn" id="conn">🔌 กำลังเชื่อมต่อ…</div>
-</header>
+    <h1>🪑 ระบบจองโต๊ะทำงานอัจฉริยะ ☕<br>(Smart Desk Dashboard)</h1>
+    
+    <div class="container" id="desk-container"></div>
 
-<div class="container" id="desk-container"></div>
+    <script>
+        const broker = "broker.hivemq.com";
+        const port = 8884;
+        const clientID = "web_client_" + Math.random().toString(16).substr(2, 8);
 
-<script>
-  // ---------- ตั้งค่า ----------
-  const BROKER = "broker.hivemq.com";
-  const PORT = 8884; // WSS
+        const boardsData = {};
 
-  const boardsData = {};
-  const container = document.getElementById("desk-container");
-  const connEl = document.getElementById("conn");
+        const client = new Paho.MQTT.Client(broker, port, clientID);
 
-  // ---------- จำว่าเครื่องนี้เป็นคนกดจองโต๊ะไหน ----------
-  function setMyBooking(boardId, isBooked) {
-    try {
-      if (isBooked) sessionStorage.setItem("booked_" + boardId, "true");
-      else sessionStorage.removeItem("booked_" + boardId);
-    } catch (e) {}
-  }
-  function isMyBooking(boardId) {
-    try { return sessionStorage.getItem("booked_" + boardId) === "true"; }
-    catch (e) { return false; }
-  }
+        client.onConnectionLost = onConnectionLost;
+        client.onMessageArrived = onMessageArrived;
 
-  function deskName(id) { return "โต๊ะ " + id.replace(/^table-/i, "").toUpperCase(); }
+        client.connect({ 
+            onSuccess: onConnect,
+            onFailure: onConnectFailure,
+            useSSL: true 
+        });
 
-  // ---------- การ์ดโต๊ะ ----------
-  function getOrCreateCard(boardId) {
-    let card = document.getElementById("desk-" + boardId);
-    if (card) return card;
+        function onConnect() {
+            console.log("MQTT Connected successfully via SSL!");
+            client.subscribe("smartdesk/+/status");
+            client.subscribe("smartdesk/+/temp");
+            client.subscribe("smartdesk/+/pin");
+            client.subscribe("smartdesk/+/online");
+        }
 
-    card = document.createElement("div");
-    card.className = "card is-off";
-    card.id = "desk-" + boardId;
-    card.dataset.board = boardId;
-    card.innerHTML =
-      '<div class="tape"></div>' +
-      '<h2><span class="name"></span><span class="net">ออฟไลน์</span></h2>' +
-      '<div class="status"><span class="emo"></span><div><div class="t1"></div><div class="t2"></div></div></div>' +
-      '<div class="row"><span>🌡️ อุณหภูมิห้อง</span><b class="temp">--</b></div>' +
-      '<div class="pin hidden"></div>' +
-      '<div class="btns">' +
-        '<button class="btn book" disabled>📌 จองโต๊ะ</button>' +
-        '<button class="btn logout" disabled>👋 คืนโต๊ะ</button>' +
-      '</div>';
-    card.querySelector(".name").textContent = "🪑 " + deskName(boardId);
-    card.querySelector(".book").addEventListener("click", () => sendBooking(boardId));
-    card.querySelector(".logout").addEventListener("click", () => sendLogout(boardId));
-    container.appendChild(card);
+        function onConnectFailure(responseObject) {
+            console.error("MQTT Connection Failed: " + responseObject.errorMessage);
+        }
 
-    // เรียงการ์ดตามชื่อ A, B, C ...
-    Array.from(container.children)
-      .sort((a, b) => a.dataset.board.localeCompare(b.dataset.board))
-      .forEach(el => container.appendChild(el));
-    return card;
-  }
+        function onConnectionLost(responseObject) {
+            if (responseObject.errorCode !== 0) {
+                console.log("Connection Lost: " + responseObject.errorMessage);
+            }
+        }
 
-  // สถานะที่แสดงบนเว็บ: off / vacant / booked (รอใส่รหัส) / inuse (ใส่รหัสแล้ว)
-  function viewState(d) {
-    if (!d.online || d.status === "OFF") return "off";
-    if (d.status === "VACANT") return "vacant";
-    // ใส่รหัสถูกแล้ว บอร์ดจะส่ง pin = "unavailable" (หรือ status = OCCUPIED)
-    if (d.pin === "unavailable" || d.status === "OCCUPIED") return "inuse";
-    return "booked";
-  }
+        // ตัวช่วยบันทึก/เช็กว่าเครื่องนี้เป็นคนกดจองโต๊ะนี้หรือไม่
+        function setMyBooking(boardId, isBooked) {
+            if (isBooked) {
+                sessionStorage.setItem(`booked_${boardId}`, 'true');
+            } else {
+                sessionStorage.removeItem(`booked_${boardId}`);
+            }
+        }
 
-  function updateBoardUI(boardId) {
-    const d = boardsData[boardId];
-    if (!d) return;
-    const card = getOrCreateCard(boardId);
-    const v = viewState(d);
-    const mine = isMyBooking(boardId);
+        function isMyBooking(boardId) {
+            return sessionStorage.getItem(`booked_${boardId}`) === 'true';
+        }
 
-    let cls, emo, t1, t2;
-    if (v === "off") {
-      cls = "is-off"; emo = "😴"; t1 = "ไม่พร้อมใช้งาน"; t2 = "โต๊ะนี้ปิดอยู่หรือหลุดการเชื่อมต่อ";
-    } else if (v === "vacant") {
-      cls = "is-vacant"; emo = "✨"; t1 = "ว่าง"; t2 = "กดจองได้เลย";
-    } else if (v === "booked") {
-      cls = "is-booked"; emo = "🔑"; t1 = "จองแล้ว";
-      t2 = mine ? "รอใส่รหัสที่หน้าโต๊ะ" : "มีคนจองไว้แล้ว";
-    } else {
-      cls = "is-inuse"; emo = "🔒"; t1 = "จองแล้ว";
-      t2 = mine ? "คุณกำลังใช้โต๊ะนี้อยู่" : "มีคนนั่งทำงานอยู่";
-    }
+        function getOrCreateCard(boardId) {
+            let card = document.getElementById(`desk-${boardId}`);
+            if (!card) {
+                const container = document.getElementById('desk-container');
+                card = document.createElement('div');
+                card.className = 'card offline-card';
+                card.id = `desk-${boardId}`;
+                
+                const tableDisplayName = boardId.toUpperCase();
+                card.innerHTML = `
+                    <h2>
+                        <span>🪑 โต๊ะ ${tableDisplayName}</span>
+                        <span id="online-${boardId}" class="online-tag offline">OFFLINE</span>
+                    </h2>
+                    <div>สถานะโต๊ะ: <div id="status-${boardId}" class="status-box off">ไม่พร้อมใช้งาน</div></div>
+                    <div class="info-group">🌡️ อุณหภูมิห้อง: <b id="temp-${boardId}">--</b> °C</div>
+                    <div class="info-group">🎟️ หมายเลขการจอง (PIN):</div>
+                    <div id="pin-${boardId}" class="pin-box">----</div>
+                    
+                    <button id="btn-book-${boardId}" class="btn btn-book" onclick="sendBooking('${boardId}')" disabled>📌 จองโต๊ะ</button>
+                    <button id="btn-logout-${boardId}" class="btn btn-logout" onclick="sendLogout('${boardId}')" disabled>👋 ลอคเอาท์ (คืนโต๊ะ)</button>
+                `;
+                container.appendChild(card);
+            }
+            return card;
+        }
 
-    card.className = "card " + cls;
-    card.querySelector(".net").textContent = d.online ? "🟢 ออนไลน์" : "ออฟไลน์";
-    card.querySelector(".emo").textContent = emo;
-    card.querySelector(".t1").textContent = t1;
-    card.querySelector(".t2").textContent = t2;
-    card.querySelector(".temp").textContent = (d.online && d.temp !== "--") ? d.temp + " °C" : "--";
+        function updateBoardUI(boardId) {
+            const data = boardsData[boardId];
+            if (!data) return;
 
-    // PIN: โชว์เฉพาะตอนรอใส่รหัส เครื่องที่จองเห็นเลขจริง เครื่องอื่นเห็น ****
-    const pinEl = card.querySelector(".pin");
-    if (v === "booked") {
-      pinEl.textContent = mine ? (/^\d{4}$/.test(d.pin) ? d.pin : "----") : "****";
-      pinEl.classList.remove("hidden");
-    } else {
-      pinEl.classList.add("hidden");
-    }
+            const onlineTag = document.getElementById(`online-${boardId}`);
+            const statusElem = document.getElementById(`status-${boardId}`);
+            const tempElem = document.getElementById(`temp-${boardId}`);
+            const pinElem = document.getElementById(`pin-${boardId}`);
+            const bookBtn = document.getElementById(`btn-book-${boardId}`);
+            const logoutBtn = document.getElementById(`btn-logout-${boardId}`);
+            const cardElem = document.getElementById(`desk-${boardId}`);
 
-    card.querySelector(".book").disabled = (v !== "vacant");
-    card.querySelector(".logout").disabled = !((v === "booked" || v === "inuse") && mine);
+            if (!data.online) {
+                onlineTag.innerText = "OFFLINE";
+                onlineTag.className = "online-tag offline";
+                cardElem.classList.add("offline-card");
 
-    renderSummary();
-  }
+                statusElem.innerText = "ออฟไลน์";
+                statusElem.className = "status-box off";
+                bookBtn.disabled = true;
+                logoutBtn.disabled = true;
+                pinElem.innerText = "----";
+            } else {
+                onlineTag.innerText = "ONLINE";
+                onlineTag.className = "online-tag online";
+                cardElem.classList.remove("offline-card");
 
-  function renderSummary() {
-    const ids = Object.keys(boardsData).filter(id => boardsData[id].hasBeenOnline);
-    const el = document.getElementById("summary");
-    if (ids.length === 0) { el.textContent = "😴 ยังไม่มีโต๊ะออนไลน์"; return; }
-    const free = ids.filter(id => viewState(boardsData[id]) === "vacant").length;
-    el.textContent = "✨ ว่าง " + free + " จาก " + ids.length + " โต๊ะ";
-  }
+                if (data.status === "VACANT") {
+                    statusElem.innerText = "พร้อมใช้งาน";
+                    statusElem.className = "status-box vacant";
+                    bookBtn.disabled = false;
+                    logoutBtn.disabled = true;
+                    pinElem.innerText = "----";
+                } else if (data.status === "OFF") {
+                    statusElem.innerText = "ปิดเครื่อง (OFF)";
+                    statusElem.className = "status-box off";
+                    bookBtn.disabled = true;
+                    logoutBtn.disabled = true;
+                    pinElem.innerText = "----";
+                } else {
+                    // สถานะมีการจองหรือใช้งานอยู่ (BOOKED / OCCUPIED)
+                    statusElem.innerText = data.status;
+                    statusElem.className = "status-box " + data.status.toLowerCase();
+                    bookBtn.disabled = true;
+                    
+                    // แสดง PIN เฉพาะเครื่องที่กดจองเท่านั้น
+                    if (isMyBooking(boardId)) {
+                        pinElem.innerText = data.pin;
+                        logoutBtn.disabled = false;
+                    } else {
+                        pinElem.innerText = "****"; // เครื่องอื่นเห็นเป็น ****
+                        logoutBtn.disabled = true; // ปิดปุ่มลอคเอาท์สำหรับเครื่องอื่น
+                    }
+                }
+            }
+            if (tempElem) tempElem.innerText = data.temp;
+        }
 
-  // ---------- MQTT ----------
-  const client = new Paho.MQTT.Client(BROKER, PORT, "web_client_" + Math.random().toString(16).slice(2, 10));
-  client.onConnectionLost = () => {
-    connEl.textContent = "⚠️ หลุดการเชื่อมต่อ กำลังต่อใหม่…";
-    setTimeout(connect, 3000);
-  };
-  client.onMessageArrived = onMessageArrived;
+        function onMessageArrived(message) {
+            const topic = message.destinationName;
+            const payload = message.payloadString;
+            const topicParts = topic.split("/");
+            
+            if (topicParts.length < 3 || topicParts[0] !== "smartdesk") return;
 
-  function connect() {
-    client.connect({
-      useSSL: true,
-      onSuccess: () => {
-        connEl.textContent = "✅ เชื่อมต่อเซิร์ฟเวอร์แล้ว";
-        ["status", "temp", "pin", "online"].forEach(t => client.subscribe("smartdesk/+/" + t));
-      },
-      onFailure: e => {
-        connEl.textContent = "❌ เชื่อมต่อไม่ได้ ลองรีเฟรชหน้านี้";
-        console.error(e.errorMessage);
-      }
-    });
-  }
+            const boardId = topicParts[1];
+            const type = topicParts[2];
 
-  function onMessageArrived(message) {
-    const parts = message.destinationName.split("/");
-    if (parts.length < 3 || parts[0] !== "smartdesk") return;
-    const boardId = parts[1], type = parts[2], payload = message.payloadString;
+            if (!boardsData[boardId]) {
+                boardsData[boardId] = { online: false, hasBeenOnline: false, status: "VACANT", temp: "--", pin: "----" };
+            }
 
-    if (!boardsData[boardId]) {
-      boardsData[boardId] = { online: false, hasBeenOnline: false, status: "VACANT", temp: "--", pin: "----" };
-    }
-    const d = boardsData[boardId];
+            if (type === "online") {
+                const isOnline = (payload === "ONLINE");
+                boardsData[boardId].online = isOnline;
+                if (isOnline) {
+                    boardsData[boardId].hasBeenOnline = true; // ทำเครื่องหมายว่าเคยออนไลน์แล้ว
+                }
+            } 
+            else if (type === "status") {
+                boardsData[boardId].status = payload;
+                if (payload === "VACANT" || payload === "OFF") {
+                    boardsData[boardId].pin = "----";
+                    setMyBooking(boardId, false); // ล้างสิทธิ์การจองเมื่อโต๊ะว่าง
+                }
+            } 
+            else if (type === "temp") {
+                boardsData[boardId].temp = payload;
+            } 
+            else if (type === "pin") {
+                boardsData[boardId].pin = payload;
+            }
 
-    if (type === "online") {
-      d.online = (payload === "ONLINE");
-      if (d.online) d.hasBeenOnline = true;
-    } else if (type === "status") {
-      d.status = payload;
-      if (payload === "VACANT" || payload === "OFF") {
-        d.pin = "----";
-        setMyBooking(boardId, false); // โต๊ะว่างแล้ว ล้างสิทธิ์การจอง
-      }
-    } else if (type === "temp") {
-      d.temp = payload;
-    } else if (type === "pin") {
-      d.pin = payload;
-    }
+            // จะสร้างและแสดงผลการ์ดเฉพาะโต๊ะที่เคยออนไลน์มาแล้วเท่านั้น
+            if (boardsData[boardId].hasBeenOnline) {
+                getOrCreateCard(boardId);
+                updateBoardUI(boardId);
+            }
+        }
 
-    // แสดงการ์ดเฉพาะโต๊ะที่เคยออนไลน์แล้วเท่านั้น
-    if (d.hasBeenOnline) updateBoardUI(boardId);
-  }
+        function sendBooking(boardId) {
+            setMyBooking(boardId, true); // บันทึกว่าเครื่องนี้เป็นผู้กดจอง
+            const message = new Paho.MQTT.Message("BOOK");
+            message.destinationName = `smartdesk/${boardId}/command`;
+            client.send(message);
+        }
 
-  function sendBooking(boardId) {
-    setMyBooking(boardId, true);
-    const m = new Paho.MQTT.Message("BOOK");
-    m.destinationName = "smartdesk/" + boardId + "/command";
-    client.send(m);
-  }
-
-  function sendLogout(boardId) {
-    setMyBooking(boardId, false);
-    const m = new Paho.MQTT.Message("LOGOUT");
-    m.destinationName = "smartdesk/" + boardId + "/command";
-    client.send(m);
-  }
-
-  // ---------- เริ่มทำงาน ----------
-  renderSummary();
-  connect();
-</script>
+        function sendLogout(boardId) {
+            setMyBooking(boardId, false); // ล้างสิทธิ์เมื่อคืนโต๊ะ
+            const message = new Paho.MQTT.Message("LOGOUT");
+            message.destinationName = `smartdesk/${boardId}/command`;
+            client.send(message);
+        }
+    </script>
 </body>
 </html>
