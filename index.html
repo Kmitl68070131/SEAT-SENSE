@@ -39,25 +39,8 @@
 
     <script>
         const broker = "broker.hivemq.com";
-        const port = 8883; // เปลี่ยนพอร์ต WSS เป็น 8883
+        const port = 8000;
         const clientID = "web_client_" + Math.random().toString(16).substr(2, 8);
-
-        const boardsData = {};
-
-        const client = new Paho.MQTT.Client(broker, Number(port), clientID);
-
-        client.onConnectionLost = onConnectionLost;
-        client.onMessageArrived = onMessageArrived;
-
-        // เพิ่มการตั้งค่า useSSL ให้เป็น true เพื่อรองรับ HTTPS ของ GitHub Pages
-        client.connect({ 
-            useSSL: true, 
-            onSuccess: onConnect,
-            onFailure: (err) => { console.log("MQTT Connect Failed: ", err); }
-        });
-        /*const broker = "broker.hivemq.com";
-        const port = 8884;
-        const clientID = "web_client_webweb" + Math.random().toString(16).substr(2, 8);
 
         const boardsData = {};
 
@@ -66,7 +49,7 @@
         client.onConnectionLost = onConnectionLost;
         client.onMessageArrived = onMessageArrived;
 
-        client.connect({ onSuccess: onConnect });*/
+        client.connect({ onSuccess: onConnect });
 
         function onConnect() {
             console.log("MQTT Connected!");
