@@ -39,7 +39,7 @@
 
     <script>
         const broker = "broker.hivemq.com";
-        const port = 8884; // เปลี่ยนจาก 8000 เป็น 8884 สำหรับ HTTPS/WSS
+        const port = 8884;
         const clientID = "web_client_" + Math.random().toString(16).substr(2, 8);
 
         const boardsData = {};
@@ -49,7 +49,6 @@
         client.onConnectionLost = onConnectionLost;
         client.onMessageArrived = onMessageArrived;
 
-        // เปิดใช้งาน useSSL: true เพื่อรองรับการรันบน HTTPS (GitHub Pages)
         client.connect({ 
             onSuccess: onConnect,
             onFailure: onConnectFailure,
@@ -72,6 +71,19 @@
             if (responseObject.errorCode !== 0) {
                 console.log("Connection Lost: " + responseObject.errorMessage);
             }
+        }
+
+        // ตัวช่วยบันทึก/เช็กว่าเครื่องนี้เป็นคนกดจองโต๊ะนี้หรือไม่
+        function setMyBooking(boardId, isBooked) {
+            if (isBooked) {
+                sessionStorage.setItem(`booked_${boardId}`, 'true');
+            } else {
+                sessionStorage.removeItem(`booked_${boardId}`);
+            }
+        }
+
+        function isMyBooking(boardId) {
+            return sessionStorage.getItem(`booked_${boardId}`) === 'true';
         }
 
         function getOrCreateCard(boardId) {
@@ -118,7 +130,7 @@
                 onlineTag.className = "online-tag offline";
                 cardElem.classList.add("offline-card");
 
-                statusElem.innerText = "ไม่พร้อมใช้งาน";
+                statusElem.innerText = "ออฟไลน์";
                 statusElem.className = "status-box off";
                 bookBtn.disabled = true;
                 logoutBtn.disabled = true;
@@ -141,11 +153,19 @@
                     logoutBtn.disabled = true;
                     pinElem.innerText = "----";
                 } else {
+                    // สถานะมีการจองหรือใช้งานอยู่ (BOOKED / OCCUPIED)
                     statusElem.innerText = data.status;
                     statusElem.className = "status-box " + data.status.toLowerCase();
                     bookBtn.disabled = true;
-                    logoutBtn.disabled = false;
-                    pinElem.innerText = data.pin;
+                    
+                    // แสดง PIN เฉพาะเครื่องที่กดจองเท่านั้น
+                    if (isMyBooking(boardId)) {
+                        pinElem.innerText = data.pin;
+                        logoutBtn.disabled = false;
+                    } else {
+                        pinElem.innerText = "****"; // เครื่องอื่นเห็นเป็น ****
+                        logoutBtn.disabled = true; // ปิดปุ่มลอคเอาท์สำหรับเครื่องอื่น
+                    }
                 }
             }
             if (tempElem) tempElem.innerText = data.temp;
@@ -161,17 +181,23 @@
             const boardId = topicParts[1];
             const type = topicParts[2];
 
-            getOrCreateCard(boardId);
-
             if (!boardsData[boardId]) {
-                boardsData[boardId] = { online: true, status: "VACANT", temp: "--", pin: "----" };
+                boardsData[boardId] = { online: false, hasBeenOnline: false, status: "VACANT", temp: "--", pin: "----" };
             }
 
             if (type === "online") {
-                boardsData[boardId].online = (payload === "ONLINE");
+                const isOnline = (payload === "ONLINE");
+                boardsData[boardId].online = isOnline;
+                if (isOnline) {
+                    boardsData[boardId].hasBeenOnline = true; // ทำเครื่องหมายว่าเคยออนไลน์แล้ว
+                }
             } 
             else if (type === "status") {
                 boardsData[boardId].status = payload;
+                if (payload === "VACANT" || payload === "OFF") {
+                    boardsData[boardId].pin = "----";
+                    setMyBooking(boardId, false); // ล้างสิทธิ์การจองเมื่อโต๊ะว่าง
+                }
             } 
             else if (type === "temp") {
                 boardsData[boardId].temp = payload;
@@ -180,16 +206,22 @@
                 boardsData[boardId].pin = payload;
             }
 
-            updateBoardUI(boardId);
+            // จะสร้างและแสดงผลการ์ดเฉพาะโต๊ะที่เคยออนไลน์มาแล้วเท่านั้น
+            if (boardsData[boardId].hasBeenOnline) {
+                getOrCreateCard(boardId);
+                updateBoardUI(boardId);
+            }
         }
 
         function sendBooking(boardId) {
+            setMyBooking(boardId, true); // บันทึกว่าเครื่องนี้เป็นผู้กดจอง
             const message = new Paho.MQTT.Message("BOOK");
             message.destinationName = `smartdesk/${boardId}/command`;
             client.send(message);
         }
 
         function sendLogout(boardId) {
+            setMyBooking(boardId, false); // ล้างสิทธิ์เมื่อคืนโต๊ะ
             const message = new Paho.MQTT.Message("LOGOUT");
             message.destinationName = `smartdesk/${boardId}/command`;
             client.send(message);
