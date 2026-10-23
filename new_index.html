@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Desk 🪑 จองโต๊ะทำงาน</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Mali:wght@500;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1d2a44;
+    --paper: #e3eefa;
+    --grid: #c9dcef;
+    --mint: #bdecc9;
+    --sun: #ffe38a;
+    --coral: #ffb9aa;
+    --fog: #dfe3ea;
+    --white: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 28px 16px 48px;
+    font-family: 'Sarabun', 'Segoe UI', Tahoma, sans-serif;
+    color: var(--ink);
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 28px 28px;
+    min-height: 100vh;
+  }
+  header { text-align: center; margin-bottom: 30px; }
+  h1 {
+    font-family: 'Mali', 'Sarabun', sans-serif; font-weight: 700;
+    font-size: clamp(26px, 5vw, 38px); margin: 0 0 10px;
+  }
+  .sub { margin: 0 0 14px; font-size: 16px; }
+  .pill {
+    display: inline-block; background: var(--white);
+    border: 2.5px solid var(--ink); border-radius: 999px;
+    padding: 5px 16px; font-weight: 700; font-size: 15px;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .conn { margin-top: 10px; font-size: 14px; }
+
+  .container { display: flex; justify-content: center; flex-wrap: wrap; gap: 34px; }
+
+  .card {
+    position: relative; width: 330px; padding: 22px 20px 20px;
+    background: var(--white); border: 3px solid var(--ink); border-radius: 22px;
+    box-shadow: 7px 7px 0 var(--ink);
+  }
+  .card:nth-child(odd)  { transform: rotate(-1.2deg); }
+  .card:nth-child(even) { transform: rotate(1deg); }
+  .card.is-vacant { background: var(--mint); }
+  .card.is-booked { background: var(--sun); }
+  .card.is-inuse  { background: var(--coral); }
+  .card.is-off    { background: var(--fog); }
+
+  .tape {
+    position: absolute; top: -14px; left: 50%; width: 90px; height: 26px;
+    transform: translateX(-50%) rotate(-3deg);
+    background: rgba(255,255,255,.75); border: 2px solid var(--ink); border-radius: 4px;
+  }
+  .card h2 {
+    font-family: 'Mali', 'Sarabun', sans-serif; font-size: 24px; margin: 6px 0 14px;
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  }
+  .net {
+    font-family: 'Sarabun', sans-serif; font-size: 13px; font-weight: 700;
+    background: var(--white); border: 2px solid var(--ink); border-radius: 999px; padding: 2px 10px;
+  }
+
+  .status {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--white); border: 2.5px solid var(--ink); border-radius: 16px;
+    padding: 10px 14px; margin-bottom: 14px;
+  }
+  .status .emo { font-size: 38px; line-height: 1; }
+  .status .t1 { font-weight: 700; font-size: 19px; }
+  .status .t2 { font-size: 13px; opacity: .8; }
+
+  .row { display: flex; justify-content: space-between; align-items: center; margin: 8px 2px; font-size: 16px; }
+  .row b { font-size: 18px; }
+
+  .pin {
+    text-align: center; font-family: 'Mali', sans-serif; font-weight: 700;
+    font-size: 30px; letter-spacing: 8px; padding: 8px 0 8px 8px; margin: 10px 0 14px;
+    background: var(--white); border: 2.5px dashed var(--ink); border-radius: 14px;
+  }
+  .pin.hidden { display: none; }
+
+  .btns { display: grid; gap: 10px; }
+  .btn {
+    font-family: 'Sarabun', sans-serif; font-weight: 700; font-size: 17px;
+    padding: 11px; color: var(--ink); background: var(--white);
+    border: 2.5px solid var(--ink); border-radius: 14px; cursor: pointer;
+    box-shadow: 3px 3px 0 var(--ink);
+    transition: transform .08s, box-shadow .08s;
+  }
+  .btn:hover:not(:disabled) { background: #fffbe8; }
+  .btn:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
+  .btn:focus-visible { outline: 3px solid #2f6fed; outline-offset: 2px; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
+
+  @media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
+  @media (max-width: 400px) { .card { width: 100%; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🪑 ระบบจองโต๊ะทำงาน ☕</h1>
+  <p class="sub">เลือกโต๊ะที่ว่าง กดจอง แล้วไปใส่รหัสที่หน้าโต๊ะได้เลย</p>
+  <span class="pill" id="summary">กำลังโหลด… ⏳</span>
+  <div class="conn" id="conn">🔌 กำลังเชื่อมต่อ…</div>
+</header>
+
+<div class="container" id="desk-container"></div>
+
+<script>
+  // ---------- ตั้งค่า ----------
+  const BROKER = "broker.hivemq.com";
+  const PORT = 8884; // WSS
+  const DESKS = ["table-A", "table-B"]; // ต้องตรงกับ TABLE_BOARD_ID ในบอร์ดแต่ละตัว
+
+  // ---------- ข้อมูลโต๊ะ ----------
+  const boards = {};
+  DESKS.forEach(id => boards[id] = { online: false, status: "VACANT", temp: "--", pin: "-" });
+
+  function deskName(id) { return "โต๊ะ " + id.replace(/^table-/i, "").toUpperCase(); }
+
+  function buildCard(id) {
+    const card = document.createElement("div");
+    card.className = "card is-off";
+    card.id = "desk-" + id;
+    card.innerHTML =
+      '<div class="tape"></div>' +
+      '<h2><span></span><span class="net">ออฟไลน์</span></h2>' +
+      '<div class="status"><span class="emo"></span><div><div class="t1"></div><div class="t2"></div></div></div>' +
+      '<div class="row"><span>🌡️ อุณหภูมิห้อง</span><b class="temp">--</b></div>' +
+      '<div class="pin hidden"></div>' +
+      '<div class="btns">' +
+        '<button class="btn book" disabled>📌 จองโต๊ะ</button>' +
+        '<button class="btn logout" disabled>👋 คืนโต๊ะ</button>' +
+      '</div>';
+    card.querySelector("h2 span").textContent = "🪑 " + deskName(id);
+    card.querySelector(".book").addEventListener("click", () => sendCommand(id, "BOOK"));
+    card.querySelector(".logout").addEventListener("click", () => sendCommand(id, "LOGOUT"));
+    return card;
+  }
+
+  // สถานะที่แสดงบนเว็บ: off / vacant / booked (จองแล้ว รอใส่รหัส) / inuse (ใส่รหัสแล้ว)
+  function viewState(d) {
+    if (!d.online || d.status === "OFF") return "off";
+    if (d.status === "VACANT") return "vacant";
+    // ใส่รหัสเสร็จ บอร์ดจะส่ง pin = "unavailable" (หรือ status = OCCUPIED)
+    if (d.pin === "unavailable" || d.status === "OCCUPIED") return "inuse";
+    return "booked";
+  }
+
+  const VIEW = {
+    off:    { cls: "is-off",    emo: "😴", t1: "ไม่พร้อมใช้งาน",  t2: "โต๊ะนี้ปิดอยู่หรือหลุดการเชื่อมต่อ" },
+    vacant: { cls: "is-vacant", emo: "✨", t1: "ว่าง",            t2: "กดจองได้เลย" },
+    booked: { cls: "is-booked", emo: "🔑", t1: "จองแล้ว",         t2: "รอใส่รหัสที่หน้าโต๊ะ" },
+    inuse:  { cls: "is-inuse",  emo: "🔒", t1: "จองแล้ว",         t2: "มีคนนั่งทำงานอยู่" }
+  };
+
+  function render(id) {
+    const d = boards[id];
+    const card = document.getElementById("desk-" + id);
+    const v = viewState(d);
+    const info = VIEW[v];
+
+    card.className = "card " + info.cls;
+    card.querySelector(".net").textContent = d.online ? "🟢 ออนไลน์" : "ออฟไลน์";
+    card.querySelector(".emo").textContent = info.emo;
+    card.querySelector(".t1").textContent = info.t1;
+    card.querySelector(".t2").textContent = info.t2;
+    card.querySelector(".temp").textContent = (d.online && d.temp !== "--") ? d.temp + " °C" : "--";
+
+    const pinEl = card.querySelector(".pin");
+    if (v === "booked") {
+      pinEl.textContent = /^\d{4}$/.test(d.pin) ? d.pin : "----";
+      pinEl.classList.remove("hidden");
+    } else {
+      pinEl.classList.add("hidden");
+    }
+
+    card.querySelector(".book").disabled   = (v !== "vacant");
+    card.querySelector(".logout").disabled = (v !== "booked" && v !== "inuse");
+
+    renderSummary();
+  }
+
+  function renderSummary() {
+    const free = DESKS.filter(id => viewState(boards[id]) === "vacant").length;
+    document.getElementById("summary").textContent = "✨ ว่าง " + free + " จาก " + DESKS.length + " โต๊ะ";
+  }
+
+  // ---------- MQTT ----------
+  const client = new Paho.MQTT.Client(BROKER, PORT, "web_client_" + Math.random().toString(16).slice(2, 10));
+  const connEl = document.getElementById("conn");
+
+  client.onConnectionLost = r => {
+    connEl.textContent = "⚠️ หลุดการเชื่อมต่อ กำลังต่อใหม่…";
+    setTimeout(connect, 3000);
+  };
+  client.onMessageArrived = onMessage;
+
+  function connect() {
+    client.connect({
+      useSSL: true,
+      onSuccess: () => {
+        connEl.textContent = "✅ เชื่อมต่อเซิร์ฟเวอร์แล้ว";
+        DESKS.forEach(id => ["status", "temp", "pin", "online"].forEach(t => client.subscribe("smartdesk/" + id + "/" + t)));
+      },
+      onFailure: e => {
+        connEl.textContent = "❌ เชื่อมต่อไม่ได้ ลองรีเฟรชหน้านี้";
+        console.error(e.errorMessage);
+      }
+    });
+  }
+
+  function onMessage(msg) {
+    const parts = msg.destinationName.split("/");
+    if (parts.length < 3 || parts[0] !== "smartdesk") return;
+    const id = parts[1], type = parts[2], payload = msg.payloadString;
+    if (!boards[id]) return;
+
+    const d = boards[id];
+    if (type === "online") d.online = (payload === "ONLINE");
+    else if (type === "status") {
+      d.status = payload;
+      if (payload === "VACANT") d.pin = "-";
+    }
+    else if (type === "temp") d.temp = payload;
+    else if (type === "pin") d.pin = payload;
+    render(id);
+  }
+
+  function sendCommand(id, cmd) {
+    const m = new Paho.MQTT.Message(cmd);
+    m.destinationName = "smartdesk/" + id + "/command";
+    client.send(m);
+  }
+
+  // ---------- เริ่มทำงาน ----------
+  const container = document.getElementById("desk-container");
+  DESKS.forEach(id => { container.appendChild(buildCard(id)); render(id); });
+  connect();
+</script>
+</body>
+</html>
