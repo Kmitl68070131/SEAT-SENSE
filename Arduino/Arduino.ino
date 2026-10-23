@@ -5,11 +5,11 @@
 
 // 1. ตั้งค่าการเชื่อมต่อ (USER CONFIGURATION)
 // ==========================================
-const char* SECRET_SSID     = "wachi_";             // wifi name
-const char* SECRET_PASS     = "12345678";           // wifi Password
+const char* SECRET_SSID     = "J Park 3809";             // wifi name
+const char* SECRET_PASS     = "38094573";           // wifi Password
 const char* MQTT_BROKER     = "broker.hivemq.com";
 const int   MQTT_PORT       = 1883;
-const char* TABLE_BOARD_ID  = "tableA";             // ชื่อโต๊ะ 
+const char* TABLE_BOARD_ID  = "A0";             // ชื่อโต๊ะ 
 
 // 2. การกำหนดขาพอร์ต (PIN MAPPING)
 // ==========================================
@@ -84,7 +84,7 @@ unsigned long officeSyndromeStartTime = 0;
 unsigned long officeSyndromeDuration = 45 * 60 * 1000UL;
 unsigned long lastMqttReconnect = 0;
 
-const unsigned long AUTO_LOGOUT_TIMEOUT = 25 * 60 * 1000UL; // 25 นาที แล้วlogout
+const unsigned long AUTO_LOGOUT_TIMEOUT = 0.5 * 60 * 1000UL; // ตั้งไว้ 25 นาที
 float smoothedTemp = -999.0;
 
 // ตัวแปรสำหรับสแกน Keypad แบบ Non-blocking
@@ -115,13 +115,13 @@ String generateLCGPin() {
   return String(pinBuf);
 }
 
-// 6. ฟังก์ชันอ่านค่าเซนเซอร์
+// 6. ฟังก์ชันอ่านค่าเซนเซอร์ (Timeout 30ms เพื่อความเสถียร)
 // ==========================================
 float readUltrasonic(int trigPin, int echoPin) {
   digitalWrite(trigPin, LOW); delayMicroseconds(4);
   digitalWrite(trigPin, HIGH); delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
-  long duration = pulseIn(echoPin, HIGH, 15000); // Timeout 15ms
+  long duration = pulseIn(echoPin, HIGH, 30000); // Timeout 30ms (~5 เมตร)
   if (duration == 0) return -1.0;
   return (duration * 0.0343) / 2.0;
 }
@@ -153,7 +153,7 @@ void resetToVacant() {
   
   if (mqttClient.connected()) {
     mqttClient.publish(TOPIC_STATUS.c_str(), "VACANT", true);
-    mqttClient.publish(TOPIC_PIN.c_str(), "-", true);
+    mqttClient.publish(TOPIC_PIN.c_str(), "----", true);
     mqttClient.publish(TOPIC_ONLINE.c_str(), "ONLINE", true);
   }
   lcd.clear();
@@ -169,7 +169,7 @@ void turnOffMachine() {
   lcd.noBacklight();
   if (mqttClient.connected()) {
     mqttClient.publish(TOPIC_STATUS.c_str(), "OFF", true);
-    mqttClient.publish(TOPIC_PIN.c_str(), "-", true);
+    mqttClient.publish(TOPIC_PIN.c_str(), "----", true);
     mqttClient.publish(TOPIC_ONLINE.c_str(), "OFFLINE", true);
   }
 }
@@ -235,6 +235,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
       currentState = STATE_BOOKED;
       isPinScreenActive = false;
       inputBuffer = "";
+      lastMovementTime = millis(); // เริ่มจับเวลานับถอยหลังทันทีเมื่อเข้าสู่หน้าจอง/ใส่รหัส
       
       mqttClient.publish(TOPIC_PIN.c_str(), generatedPin.c_str(), true);
       mqttClient.publish(TOPIC_STATUS.c_str(), "BOOKED", true);
@@ -258,7 +259,13 @@ void maintainMqttConnection() {
       if (mqttClient.connect(clientId.c_str(), NULL, NULL, TOPIC_ONLINE.c_str(), 1, true, "OFFLINE")) {
         mqttClient.subscribe(TOPIC_COMMAND.c_str());
         mqttClient.publish(TOPIC_ONLINE.c_str(), "ONLINE", true);
-        mqttClient.publish(TOPIC_STATUS.c_str(), (currentState == STATE_VACANT) ? "VACANT" : "OCCUPIED", true);
+
+        const char* statusStr = "VACANT";
+        if (currentState == STATE_OFF) statusStr = "OFF";
+        else if (currentState == STATE_BOOKED) statusStr = "BOOKED";
+        else if (currentState != STATE_VACANT) statusStr = "OCCUPIED";
+
+        mqttClient.publish(TOPIC_STATUS.c_str(), statusStr, true);
         mqttClient.publish(TOPIC_TEMP.c_str(), String(readTMP36(), 1).c_str(), false);
       }
     }
@@ -313,9 +320,6 @@ void startOccupiedSession() {
   lastMins = -1;
   lastSecs = -1;
   lastPauseState = false;
-  if (mqttClient.connected()) {
-    mqttClient.publish(TOPIC_STATUS.c_str(), "OCCUPIED", true);
-  }
   lcd.clear();
 }
 
@@ -395,7 +399,7 @@ void loop() {
   // 1. จัดการปุ่มกด (Keypad Logic)
   // ----------------------------------------------------
   if (key != 0) {
-    lastMovementTime = millis();
+    lastMovementTime = millis(); // กด Keypad ถือว่ามีความเคลื่อนไหว
 
     if (currentState == STATE_CONFIRM_OFF) {
       if (key == 'A') {
@@ -446,12 +450,15 @@ void loop() {
       } 
       else if (key == 'D') {
         if (inputBuffer == generatedPin) {
+          lastMovementTime = millis(); 
+
           if (mqttClient.connected()) {
-            mqttClient.publish(TOPIC_PIN.c_str(), "unavailable", true);
+            mqttClient.publish(TOPIC_STATUS.c_str(), "OCCUPIED", true);
+            mqttClient.publish(TOPIC_PIN.c_str(), "----", true);
           }
 
           currentState = STATE_WELCOME;
-          welcomeStartTime = millis(); // เริ่มนับเวลา 4 วินาที
+          welcomeStartTime = millis();
           lcd.clear();
           lcd.setCursor(0, 0); lcd.print("   WELCOME TO   ");
           lcd.setCursor(0, 1); lcd.print(" S.E.A.T. SENCE ");
@@ -475,12 +482,12 @@ void loop() {
         if (inputBuffer.length() > 0) {
           officeSyndromeDuration = inputBuffer.toInt() * 60 * 1000UL;
         } else {
-          officeSyndromeDuration = 45 * 60 * 1000UL; // Default 45 นาที
+          officeSyndromeDuration = 45 * 60 * 1000UL;
         }
         startOccupiedSession();
       } else if (key == 'B') {
         if (inputBuffer.length() == 0) {
-          currentState = STATE_MENU; // กด B ถอยกลับไปหน้าเมนู
+          currentState = STATE_MENU;
           redrawCurrentStateLCD();
         }
       }
@@ -489,10 +496,8 @@ void loop() {
       if (key == 'A') {
         unsigned long elapsed = isPaused ? (pauseStartTime - officeSyndromeStartTime) : (millis() - officeSyndromeStartTime);
         if (elapsed >= officeSyndromeDuration) {
-          // หากหมดเวลาแล้วกด A (Again) -> เริ่มนับถอยหลังใหม่
           startOccupiedSession();
         } else {
-          // หากอยู่ระหว่างนับถอยหลัง -> Pause / Resume
           isPaused = !isPaused;
           if (isPaused) {
             pauseStartTime = millis();
@@ -503,7 +508,7 @@ void loop() {
           lastSecs = -1;
         }
       } 
-      else if (key == 'B') { // กด B (Back) -> ยกเลิก session กลับหน้าตั้งเวลา
+      else if (key == 'B') {
         isPaused = false;
         setRGBColorMode(COLOR_OFF, true);
         currentState = STATE_SET_TIME;
@@ -559,7 +564,6 @@ void loop() {
           setRGBColorMode(COLOR_RED);
         }
       } else {
-        // เมื่อหมดเวลา (00:00)
         if (lastMins != 0 || lastSecs != 0 || isPaused != lastPauseState) {
           lastMins = 0;
           lastSecs = 0;
@@ -569,7 +573,6 @@ void loop() {
           lcd.setCursor(0, 1); lcd.print("A|Again   B|Back");
         }
 
-        // ไฟสีแดงกระพริบทุกๆ 1 วินาที
         if ((millis() / 1000) % 2 == 0) {
           setRGBColorMode(COLOR_RED);
         } else {
@@ -579,22 +582,63 @@ void loop() {
     }
   }
 
-  // 3. อ่านค่าเซนเซอร์ Auto-Logout 25 นาที
+  // 3. อ่านค่าเซนเซอร์ และจัดการการแสดงผลบน Serial Monitor
   // ----------------------------------------------------
   if (millis() - lastSensorRead >= 1000) {
     lastSensorRead = millis();
 
     float d1 = readUltrasonic(TRIG_1, ECHO_1);
+    delay(30); // หน่วงเวลาเล็กน้อยเพื่อป้องกันคลื่นกวนกันระหว่าง U1 และ U2
     float d2 = readUltrasonic(TRIG_2, ECHO_2);
 
-    if ((d1 > 0 && d1 < 80) || (d2 > 0 && d2 < 80)) {
-      lastMovementTime = millis();
+    // ตรวจจับคน: ถ้าเซนเซอร์ข้างใดข้างหนึ่งอ่านค่าได้มากกว่า 0 และน้อยกว่าหรือเท่ากับ 80 cm ถือว่า "มีคนอยู่"
+    bool isPersonPresent = (d1 > 0.0 && d1 <= 80.0) || (d2 > 0.0 && d2 <= 80.0);
+
+    if (isPersonPresent) {
+      lastMovementTime = millis(); // ถ้านั่งอยู่หน้าโต๊ะ (< 80 cm) ให้รีเซ็ตเวลานับถอยหลังเสมอ
     }
 
-    if (currentState == STATE_OCCUPIED || currentState == STATE_BOOKED) {
-      if (millis() - lastMovementTime >= AUTO_LOGOUT_TIMEOUT) {
+    // เช็กสถานะว่าโต๊ะถูกจองแล้วหรือกำลังทำงานอยู่ (ไม่นับตอน VACANT และ OFF)
+    bool isDeskActive = (currentState != STATE_VACANT && currentState != STATE_OFF);
+
+    // แปลงระยะทางเป็นข้อความเพื่อแสดงบน Serial Monitor ตามความยาวจริง
+    char u1Str[12], u2Str[12];
+    if (d1 < 0) sprintf(u1Str, "---.-cm"); else sprintf(u1Str, "%.1fcm", d1);
+    if (d2 < 0) sprintf(u2Str, "---.-cm"); else sprintf(u2Str, "%.1fcm", d2);
+
+    // เงื่อนไข: โต๊ะถูกจองแล้ว/กำลังทำงาน และ "ไม่มีคนอยู่" (ระยะทางทั้ง 2 ข้าง > 80 cm)
+    if (isDeskActive && !isPersonPresent) {
+      unsigned long noMovementDuration = millis() - lastMovementTime;
+      unsigned long remainingSec = (AUTO_LOGOUT_TIMEOUT > noMovementDuration) 
+                                    ? (AUTO_LOGOUT_TIMEOUT - noMovementDuration) / 1000UL 
+                                    : 0;
+
+      int remainMins = remainingSec / 60;
+      int remainSecs = remainingSec % 60;
+
+      // แสดงระยะจริง พร้อมเวลานับถอยหลัง TimeOut
+      char serialBuf[120];
+      snprintf(serialBuf, sizeof(serialBuf), 
+               "U1 : %-8s TimeOut %02d:%02d U2 : %-8s", 
+               u1Str, remainMins, remainSecs, u2Str);
+      Serial.println(serialBuf);
+
+      // เมื่อไม่มีคนอยู่นานครบเวลา (AUTO_LOGOUT_TIMEOUT) -> สั่งคืนโต๊ะทันที
+      if (noMovementDuration >= AUTO_LOGOUT_TIMEOUT) {
+        Serial.println(">>> Timeout! Sending LOGOUT and resetting to VACANT <<<");
+        if (mqttClient.connected()) {
+          mqttClient.publish(TOPIC_COMMAND.c_str(), "LOGOUT", false);
+        }
         resetToVacant();
       }
+    } 
+    // สภาวะปกติ (VACANT / OFF หรือ มีคนนั่งอยู่หน้าโต๊ะ): แสดงระยะทางจริงของ U1 และ U2
+    else {
+      char serialBuf[120];
+      snprintf(serialBuf, sizeof(serialBuf), 
+               "U1 : %-8s                       U2 : %-8s", 
+               u1Str, u2Str);
+      Serial.println(serialBuf);
     }
   }
 }
