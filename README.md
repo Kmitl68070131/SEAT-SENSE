@@ -10,9 +10,13 @@ Physical Computing Project 2026 - IT KMITL
 | รหัสนักศึกษา | ชื่อ-นามสกุล | หน้าที่ / บทบาทหลัก |
 
 | 68070128 | นายพีระพัฒน์ เสียนาสระ | Backend & Cloud API Developer |
+
 | 68070131 | นายภควรรษ หันหลวงราช | Embedded Firmware & Hardware Engineer |
+
 | 68070148 | นายภูสิทธิ์ รุ่งเรือง | Frontend Web Developer |
+
 | 68070164 | นายวชิรวิทย์ อนุสุนชนัง | Hardware Assembly & Integration |
+
 
 *คณะเทคโนโลยีสารสนเทศ สถาบันเทคโนโลยีพระจอมเกล้าเจ้าคุณทหารลาดกระบัง (IT KMITL)*
 
