@@ -1,6 +1,6 @@
 Physical Computing Project 2026 - IT KMITL
 
-# S.E.A.T. (Smart Ergonomic & Available Table)
+# S.E.A.T (Smart Ergonomic & Available Table)
 > **ระบบจัดการที่นั่งห้องสมุดอัจฉริยะและแจ้งเตือนป้องกันออฟฟิศซินโดรม**
 
 ---
