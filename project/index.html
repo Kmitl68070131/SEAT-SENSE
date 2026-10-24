@@ -18,7 +18,7 @@
     <a class="brand home-link" href="#home">หน้าแรก</a>
     <button class="menu-toggle" aria-expanded="false" aria-controls="navigation" type="button">เมนู <span aria-hidden="true">☰</span></button>
     <nav id="navigation" aria-label="เมนูหลัก">
-      <a href="#about">เกี่ยวกับโปรเจกต์</a><a href="#hardware">อุปกรณ์</a><a href="#workflow">การทำงาน</a><a href="#team">สมาชิก</a>
+      <a href="#about">เกี่ยวกับโปรเจกต์</a><a href="#hardware">อุปกรณ์</a><a href="#workflow">การทำงาน</a><a href="#calculations">สูตรคำนวณ</a><a href="#team">สมาชิก</a>
     </nav>
     <a class="button header-cta" data-link="website" href="../index.html">ไปยังเว็บระบบ <span aria-hidden="true">↗</span></a>
   </div>
@@ -95,7 +95,91 @@
   </div>
   <div class="diagram-slot media-slot" data-image="diagram"><span class="photo-symbol" aria-hidden="true">＋</span><h3>แผนภาพการทำงานของระบบ</h3><p>เพิ่มรูปการเชื่อมต่อ หรือ Flowchart ของกลุ่มตรงนี้</p></div>
 </section>
-<section class="shell section results" id="results"><div class="section-heading heading-row"><div><span class="eyebrow">04 / THE RESULT</span><h2>เมื่อชิ้นงานเชื่อมกับเว็บไซต์</h2><p>ภาพชิ้นงานจริงและหน้าระบบที่พัฒนาขึ้น</p></div><a class="text-link" data-link="website" href="../index.html">เปิด SmartDesk <span aria-hidden="true">↗</span></a></div>
+<!-- 04 / PRINCIPLES & CALCULATIONS -->
+<section class="shell section calculations-section" id="calculations" aria-labelledby="calculations-title">
+  <div class="section-heading heading-row">
+    <div>
+      <span class="eyebrow">04 / SYSTEM CALCULATIONS</span>
+      <h2 id="calculations-title">หลักการคำนวณของระบบ</h2>
+      <p>สมการที่ใช้จริงในโค้ด Arduino เพื่อวัดอุณหภูมิ ตรวจจับระยะทาง และสร้างรหัส PIN</p>
+    </div>
+    <span class="outline-label">ARDUINO × MATHEMATICS</span>
+  </div>
+  <div class="formula-grid">
+    <article class="formula-card">
+      <div class="formula-card-head"><span class="small-label">01 / TEMPERATURE</span><span class="formula-chip">TMP36</span></div>
+      <h3>การคำนวณอุณหภูมิ</h3>
+      <p class="formula-intro">TMP36 ส่งค่าแรงดันไฟฟ้าแบบแอนะล็อกให้ Arduino อ่านผ่านขา A0 แล้วแปลงเป็นองศาเซลเซียส</p>
+      <div class="equation-panel" aria-label="สูตรคำนวณอุณหภูมิ">
+        <span class="equation-caption">แปลงค่า ADC เป็นแรงดันไฟฟ้า</span>
+        <div class="equation">V = (ADC × 5.0) / 1023</div>
+        <span class="equation-caption equation-caption-gap">แปลงเป็นอุณหภูมิ (°C)</span>
+        <div class="equation">T = ((V − 0.5) × 100) + 20</div>
+      </div>
+      <ul class="formula-terms">
+        <li><strong>ADC</strong> — ค่าที่อ่านได้จากเซนเซอร์ (ค่าเฉลี่ย 10 ครั้ง)</li>
+        <li><strong>V</strong> — แรงดันไฟฟ้า หน่วยโวลต์ (V)</li>
+        <li><strong>T</strong> — อุณหภูมิ หน่วยองศาเซลเซียส (°C)</li>
+      </ul>
+      <p class="formula-note"><strong>หมายเหตุ:</strong> ค่า +20°C เป็นค่าชดเชยที่กำหนดเพิ่มในโค้ดของโครงงาน ไม่ใช่สูตรมาตรฐาน TMP36 และควรสอบเทียบกับอุณหภูมิจริง</p>
+      <div class="formula-code-label">ตัวอย่างจาก Arduino.ino</div>
+      <pre class="formula-code"><code>float voltage = avgRaw * (5.0 / 1023.0);
+float rawTemp = ((voltage - 0.5) * 100.0) + 20.0;
+smoothedTemp = (0.05 * rawTemp)
+             + (0.95 * smoothedTemp);</code></pre>
+      <p class="formula-footnote">ค่าที่วัดได้ถูกกรองด้วย Exponential Moving Average (EMA) เพื่อลดความผันผวนก่อนนำไปแสดงผล</p>
+    </article>
+
+    <article class="formula-card">
+      <div class="formula-card-head"><span class="small-label">02 / DISTANCE</span><span class="formula-chip">HC-SR04</span></div>
+      <h3>การคำนวณระยะทาง</h3>
+      <p class="formula-intro">เซนเซอร์อัลตราโซนิกวัดเวลาที่คลื่นเสียงเดินทางไปกระทบวัตถุและสะท้อนกลับ เพื่อคำนวณระยะห่างจากผู้ใช้งาน</p>
+      <div class="equation-panel" aria-label="สูตรคำนวณระยะทาง">
+        <span class="equation-caption">สูตรระยะทาง (เซนติเมตร)</span>
+        <div class="equation">d = (t × 0.0343) / 2</div>
+        <span class="equation-caption equation-caption-gap">ตัวอย่าง เมื่อ t = 1,000 µs</span>
+        <div class="equation">d = 17.15 cm</div>
+      </div>
+      <ul class="formula-terms">
+        <li><strong>d</strong> — ระยะทาง หน่วยเซนติเมตร (cm)</li>
+        <li><strong>t</strong> — เวลาเดินทางไป–กลับของคลื่นเสียง หน่วยไมโครวินาที (µs)</li>
+        <li><strong>0.0343</strong> — ความเร็วเสียงโดยประมาณ (cm/µs) และหาร 2 เพราะคลื่นเสียงเดินทางสองเที่ยว</li>
+      </ul>
+      <p class="formula-note"><strong>การใช้งานจริง:</strong> โค้ดกำหนดเกณฑ์ 80 cm หากเซนเซอร์ตรวจพบผู้ใช้อย่างน้อยหนึ่งตำแหน่งภายในระยะนี้ ระบบจะถือว่ายังมีคนอยู่ที่โต๊ะ</p>
+      <div class="formula-code-label">ตัวอย่างจาก Arduino.ino</div>
+      <pre class="formula-code"><code>long duration = pulseIn(echoPin, HIGH, 30000);
+if (duration == 0) return -1.0;
+return (duration * 0.0343) / 2.0;</code></pre>
+      <p class="formula-footnote">หากไม่ได้รับสัญญาณสะท้อนภายในเวลาที่กำหนด ฟังก์ชันจะคืนค่า −1 เพื่อระบุว่าอ่านระยะไม่ได้</p>
+    </article>
+
+    <article class="formula-card">
+      <div class="formula-card-head"><span class="small-label">03 / PSEUDORANDOM</span><span class="formula-chip">LCG</span></div>
+      <h3>การสร้างรหัส PIN แบบสุ่มเทียม</h3>
+      <p class="formula-intro">ระบบใช้ Linear Congruential Generator (LCG) คำนวณค่าจาก Seed เดิมเพื่อสร้างรหัส PIN 4 หลักสำหรับยืนยันการจองโต๊ะ</p>
+      <div class="equation-panel" aria-label="สูตรสร้างเลขสุ่มเทียม">
+        <span class="equation-caption">สมการ Linear Congruential Generator</span>
+        <div class="equation">X<sub>n+1</sub> = (aX<sub>n</sub> + c) mod m</div>
+        <span class="equation-caption equation-caption-gap">ค่าคงที่ในโปรเจกต์</span>
+        <div class="equation equation-small">a = 1,664,525 · c = 1,013,904,223<br>m = 9,999</div>
+      </div>
+      <ul class="formula-terms">
+        <li><strong>X<sub>n</sub></strong> — ค่า Seed หรือผลลัพธ์จากรอบก่อน</li>
+        <li><strong>a, c, m</strong> — ตัวคูณ ค่าบวก และตัวหารเอาเศษตามลำดับ</li>
+        <li><strong>PIN</strong> — ค่าที่ได้ถูกจัดรูปแบบเป็นตัวเลข 4 หลัก เช่น 0042</li>
+      </ul>
+      <p class="formula-note"><strong>ในโค้ดจริง:</strong> การคูณและบวกใช้ชนิด <code>uint32_t</code> จึงอาจมีการวนค่าที่ 32 บิตก่อนทำ <code>% 9999</code> และค่าเริ่มต้นถูกกำหนดจาก <code>millis() + analogRead(A0)</code></p>
+      <div class="formula-code-label">ตัวอย่างจาก Arduino.ino</div>
+      <pre class="formula-code"><code>lcg_seed = (A * lcg_seed + C) % m;
+char pinBuf[5];
+snprintf(pinBuf, sizeof(pinBuf), "%04lu",
+         (unsigned long)lcg_seed);</code></pre>
+      <p class="formula-footnote">LCG เป็นการสุ่มเทียมที่คาดเดาได้ จึงเหมาะกับการศึกษาหลักการมากกว่าระบบที่ต้องการ PIN ความปลอดภัยสูง</p>
+    </article>
+  </div>
+</section>
+
+<section class="shell section results" id="results"><div class="section-heading heading-row"><div><span class="eyebrow">05 / THE RESULT</span><h2>เมื่อชิ้นงานเชื่อมกับเว็บไซต์</h2><p>ภาพชิ้นงานจริงและหน้าระบบที่พัฒนาขึ้น</p></div><a class="text-link" data-link="website" href="../index.html">เปิด SmartDesk <span aria-hidden="true">↗</span></a></div>
 <div class="result-grid"><figure><div class="result-photo media-slot" data-image="prototype"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มภาพชิ้นงานจริง</span></div><figcaption><b>01 / ชิ้นงาน</b><span>ชิ้นงานต้นแบบระบบ SEAT SENSE ที่พัฒนาขึ้น
   โดยใช้ไมโครคอนโทรลเลอร์ Arduino
   ทำงานร่วมกับเซนเซอร์ Ultrasonic
@@ -104,14 +188,14 @@
   และสถานะการใช้งานที่นั่ง
   เพื่อช่วยให้ผู้ใช้ตรวจสอบที่นั่งว่าง
   และใช้งานระบบได้อย่างสะดวก</span></figcaption></figure></div></section>
-<section class="resources-section" id="resources"><div class="shell section"><div class="section-heading"><span class="eyebrow">05 / EXPLORE THE PROJECT</span><h2>รู้จักโปรเจกต์ให้มากขึ้น</h2><p>รวมเว็บไซต์ คลิปพรีเซนต์ โค้ด และเอกสารไว้ที่นี่</p></div>
+<section class="resources-section" id="resources"><div class="shell section"><div class="section-heading"><span class="eyebrow">06 / EXPLORE THE PROJECT</span><h2>รู้จักโปรเจกต์ให้มากขึ้น</h2><p>รวมเว็บไซต์ คลิปพรีเซนต์ โค้ด และเอกสารไว้ที่นี่</p></div>
 <div class="resource-grid">
 <a class="resource pending" data-link="video" aria-disabled="true"><span class="resource-icon" aria-hidden="true">▷</span><div class="resource-copy"><span class="small-label">VIDEO PRESENTATION</span><h3>คลิปพรีเซนต์</h3><p>ที่มา แนวคิด และสาธิตการทำงาน</p><span class="resource-status">รอเพิ่มลิงก์</span></div><span class="resource-arrow" aria-hidden="true">↗</span></a>
 <a class="resource featured" data-link="website" href="../index.html"><span class="resource-icon" aria-hidden="true">⌘</span><div class="resource-copy"><span class="small-label">PROJECT WEBSITE</span><h3>ใช้งาน SmartDesk</h3><p>เปิดเว็บไซต์ระบบจัดการที่นั่ง</p><span class="resource-status">เปิดเว็บไซต์ ↗</span></div><span class="resource-arrow" aria-hidden="true">↗</span></a>
 <a class="resource" data-link="github" href="https://github.com/Kmitl68070131/SEAT-SENSE" target="_blank" rel="noopener noreferrer"><span class="resource-icon" aria-hidden="true">&lt;/&gt;</span><div class="resource-copy"><span class="small-label">SOURCE CODE</span><h3>เบื้องหลังโค้ดทั้งหมด</h3><p>ดูไฟล์โปรเจกต์และโค้ดบน GitHub</p><span class="resource-status">เปิด GitHub ↗</span></div><span class="resource-arrow" aria-hidden="true">↗</span></a>
 <a class="resource pending" data-link="poster" aria-disabled="true"><span class="resource-icon" aria-hidden="true">▤</span><div class="resource-copy"><span class="small-label">PROJECT POSTER</span><h3>โปสเตอร์โปรเจกต์</h3><p>ภาพรวมโปรเจกต์ในเอกสาร PDF</p><span class="resource-status">รอเพิ่มไฟล์ PDF</span></div><span class="resource-arrow" aria-hidden="true">↗</span></a>
 </div></div></section>
-<section class="shell section" id="team"><div class="section-heading heading-row"><div><span class="eyebrow">06 / MEET THE TEAM</span><h2>ผู้จัดทำ</h2><p>ผู้ร่วมออกแบบ พัฒนา และประกอบชิ้นงาน</p></div><span class="outline-label">IT KMITL · 2026</span></div><div class="team-grid" id="team-list"></div>
+<section class="shell section" id="team"><div class="section-heading heading-row"><div><span class="eyebrow">07 / MEET THE TEAM</span><h2>ผู้จัดทำ</h2><p>ผู้ร่วมออกแบบ พัฒนา และประกอบชิ้นงาน</p></div><span class="outline-label">IT KMITL · 2026</span></div><div class="team-grid" id="team-list"></div>
 <div class="university"><p>โปรเจกต์วิชา Physical Computing<br><strong>คณะเทคโนโลยีสารสนเทศ สถาบันเทคโนโลยีพระจอมเกล้าเจ้าคุณทหารลาดกระบัง</strong></p></div></section>
 </main>
 <footer class="shell footer"><a class="footer-brand" href="#home">SEAT-SENSE</a><span>Smart Ergonomic &amp; Available Table</span><a href="#home">กลับด้านบน ↑</a></footer>

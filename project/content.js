@@ -11,9 +11,9 @@ window.PROJECT_CONTENT = {
   images: {
     hero: "pic/mainjra (2).png", // รูปชิ้นงานหลัก
     hardware1: "pic/gear1.jpg", hardware2: "pic/gear2.jpg", hardware3: "pic/gear3.jpg", hardware4: "pic/gear4.jpg",
-    hardware5: "", // รูป Keypad 4×4 เช่น "pic/gear5.jpg"
-    hardware6: "", // รูป RGB LED เช่น "pic/gear6.jpg"
-    hardware7: "", // รูป TMP36 Temperature Sensor เช่น "pic/gear7.jpg"
+    hardware5: "pic/keypad.jpg", // รูป Keypad 4×4 เช่น "pic/gear5.jpg"
+    hardware6: "pic/led.jpg", // รูป RGB LED เช่น "pic/gear6.jpg"
+    hardware7: "pic/tmp36.jpg", // รูป TMP36 Temperature Sensor เช่น "pic/gear7.jpg"
     diagram: "", // แผนภาพระบบ
     prototype: "pic/resu1.jpg", // รูปชิ้นงานจริง
     website: "pic/resu2.jpg" // รูปหน้าจอ SmartDesk
