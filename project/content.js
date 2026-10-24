@@ -9,16 +9,36 @@ window.PROJECT_CONTENT = {
     poster: "" // เช่น "assets/poster.pdf" หรือ URL ไฟล์ PDF
   },
   images: {
-    hero: "", // รูปชิ้นงานหลัก
-    hardware1: "", hardware2: "", hardware3: "", hardware4: "",
+    hero: "pic/mainjra.png", // รูปชิ้นงานหลัก
+    hardware1: "pic/gear1.jpg", hardware2: "pic/gear2.jpg", hardware3: "pic/gear3.jpg", hardware4: "pic/gear4.jpg",
     diagram: "", // แผนภาพระบบ
-    prototype: "", // รูปชิ้นงานจริง
-    website: "" // รูปหน้าจอ SmartDesk
+    prototype: "pic/resu1.jpg", // รูปชิ้นงานจริง
+    website: "pic/resu2.jpg" // รูปหน้าจอ SmartDesk
   },
   members: [
-    { name: "[ชื่อ–นามสกุล สมาชิก 1]", id: "[รหัสนักศึกษา]", role: "[หน้าที่รับผิดชอบ]", image: "" },
-    { name: "[ชื่อ–นามสกุล สมาชิก 2]", id: "[รหัสนักศึกษา]", role: "[หน้าที่รับผิดชอบ]", image: "" },
-    { name: "[ชื่อ–นามสกุล สมาชิก 3]", id: "[รหัสนักศึกษา]", role: "[หน้าที่รับผิดชอบ]", image: "" },
-    { name: "[ชื่อ–นามสกุล สมาชิก 4]", id: "[รหัสนักศึกษา]", role: "[หน้าที่รับผิดชอบ]", image: "" }
+  {
+    name: "นายพีระพัฒน์ เสียนาสระ",
+    id: "68070128",
+    role: "Backend & Cloud API Developer",
+    image: "pic/member1.jpg"
+  },
+  {
+    name: "นายภควรรษ หันหลวงราช",
+    id: "68070131",
+    role: "Embedded Firmware & Hardware Engineer",
+    image: "pic/member2.jpg"
+  },
+  {
+    name: "นายภูสิทธิ์ รุ่งเรือง",
+    id: "68070148",
+    role: "Frontend Web Developer",
+    image: "pic/member3.jpg"
+  },
+  {
+    name: "นายวชิรวิทย์ อนุสุนชนัง",
+    id: "68070164",
+    role: "Hardware Assembly & Integration",
+    image: "pic/member4.jpg"
+  }
   ]
 };
