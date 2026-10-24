@@ -3,13 +3,17 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 
-// 1. ตั้งค่าการเชื่อมต่อ (USER CONFIGURATION)
+// 1. ตั้งค่าการเชื่อมต่อและการกำหนดค่าระบบ (USER CONFIGURATION)
 // ==========================================
-const char* SECRET_SSID     = "J Park 3809";             // wifi name
-const char* SECRET_PASS     = "38094573";           // wifi Password
-const char* MQTT_BROKER     = "broker.hivemq.com";
-const int   MQTT_PORT       = 1883;
-const char* TABLE_BOARD_ID  = "A0";             // ชื่อโต๊ะ 
+const char* SECRET_SSID         = "wachi_";             // wifi name
+const char* SECRET_PASS         = "12345678";           // wifi Password
+const char* MQTT_BROKER         = "broker.hivemq.com";
+const int   MQTT_PORT           = 1883;
+const char* TABLE_BOARD_ID      = "A0";                 // ชื่อโต๊ะ 
+
+// ตัวแปรตั้งค่าระยะทางและเวลาสำหรับการ คืนโต๊ะ (Logout)
+const float DISTANCE_THRESHOLD  = 80.0;                 // ระยะทาง (cm) ถ้าน้อยกว่าหรือเท่ากับค่านี่ ถือว่ามีคนอยู่ (จะไม่นับเวลาคืนโต๊ะ)
+const unsigned long AUTO_LOGOUT_TIMEOUT = 0.5 * 60 * 1000UL; // เวลาสำหรับคืนโต๊ะอัตโนมัติเมื่อไม่มีคนอยู่ (ตั้งไว้ 30 วินาที)
 
 // 2. การกำหนดขาพอร์ต (PIN MAPPING)
 // ==========================================
@@ -25,7 +29,7 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
 
-//Topics
+// Topics
 String TOPIC_STATUS   = "smartdesk/" + String(TABLE_BOARD_ID) + "/status";
 String TOPIC_TEMP     = "smartdesk/" + String(TABLE_BOARD_ID) + "/temp";
 String TOPIC_PIN      = "smartdesk/" + String(TABLE_BOARD_ID) + "/pin";
@@ -66,15 +70,19 @@ String generatedPin = "";
 String inputBuffer = "";
 bool isPinScreenActive = false;
 
-// ตัวแประบบนับเวลาหน้า
+// ตัวแปรสถานะการตรวจจับคน
+bool isPersonPresent = false;
+
+// ตัวแประบบนับเวลาหน้า Welcome
 unsigned long welcomeStartTime = 0;
 
-// ตัวแประบบนับถอยหลังและPause
+// ตัวแประบบนับถอยหลังและ Pause
 bool isPaused = false;
 unsigned long pauseStartTime = 0;
 int lastMins = -1;
 int lastSecs = -1;
 bool lastPauseState = false;
+bool lastTimeExpired = false; // แฟล็กเช็กการแสดงผลเมื่อหมดเวลา Office Syndrome
 
 unsigned long lastSensorRead = 0;
 unsigned long lastTempPublish = 0;
@@ -84,7 +92,6 @@ unsigned long officeSyndromeStartTime = 0;
 unsigned long officeSyndromeDuration = 45 * 60 * 1000UL;
 unsigned long lastMqttReconnect = 0;
 
-const unsigned long AUTO_LOGOUT_TIMEOUT = 0.5 * 60 * 1000UL; // ตั้งไว้ 25 นาที
 float smoothedTemp = -999.0;
 
 // ตัวแปรสำหรับสแกน Keypad แบบ Non-blocking
@@ -115,7 +122,7 @@ String generateLCGPin() {
   return String(pinBuf);
 }
 
-// 6. ฟังก์ชันอ่านค่าเซนเซอร์ (Timeout 30ms เพื่อความเสถียร)
+// 6. ฟังก์ชันอ่านค่าเซนเซอร์
 // ==========================================
 float readUltrasonic(int trigPin, int echoPin) {
   digitalWrite(trigPin, LOW); delayMicroseconds(4);
@@ -149,6 +156,7 @@ void resetToVacant() {
   isPaused = false;
   lastMins = -1;
   lastSecs = -1;
+  lastTimeExpired = false;
   setRGBColorMode(COLOR_OFF, true);
   
   if (mqttClient.connected()) {
@@ -216,6 +224,7 @@ void redrawCurrentStateLCD() {
     lastMins = -1;
     lastSecs = -1;
     lastPauseState = !isPaused;
+    lastTimeExpired = false;
   }
 }
 
@@ -235,7 +244,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
       currentState = STATE_BOOKED;
       isPinScreenActive = false;
       inputBuffer = "";
-      lastMovementTime = millis(); // เริ่มจับเวลานับถอยหลังทันทีเมื่อเข้าสู่หน้าจอง/ใส่รหัส
+      lastMovementTime = millis();
       
       mqttClient.publish(TOPIC_PIN.c_str(), generatedPin.c_str(), true);
       mqttClient.publish(TOPIC_STATUS.c_str(), "BOOKED", true);
@@ -320,6 +329,7 @@ void startOccupiedSession() {
   lastMins = -1;
   lastSecs = -1;
   lastPauseState = false;
+  lastTimeExpired = false;
   lcd.clear();
 }
 
@@ -362,12 +372,13 @@ void setup() {
 void loop() {
   maintainMqttConnection();
 
-  // ส่งข้อมูลอุณหภูมิเข้า MQTT ทุกๆ 5 วินาที
+  // ส่งข้อมูลอุณหภูมิ และคำว่า ONLINE เข้า MQTT ทุกๆ 5 วินาทีตราบใดที่ยังเชื่อมต่ออยู่
   if (millis() - lastTempPublish >= 5000) {
     lastTempPublish = millis();
     if (mqttClient.connected()) {
       float currentTemp = readTMP36();
       mqttClient.publish(TOPIC_TEMP.c_str(), String(currentTemp, 1).c_str(), false);
+      mqttClient.publish(TOPIC_ONLINE.c_str(), "ONLINE", true);
     }
   }
 
@@ -375,6 +386,7 @@ void loop() {
   if (currentState == STATE_WELCOME) {
     if (millis() - welcomeStartTime >= 4000) {
       currentState = STATE_MENU;
+      lastMovementTime = millis(); // รีเซ็ตเวลานับถอยหลังใหม่เมื่อเริ่มเข้าสู่หน้า MENU
       redrawCurrentStateLCD();
     }
   }
@@ -399,7 +411,8 @@ void loop() {
   // 1. จัดการปุ่มกด (Keypad Logic)
   // ----------------------------------------------------
   if (key != 0) {
-    lastMovementTime = millis(); // กด Keypad ถือว่ามีความเคลื่อนไหว
+    // เงื่อนไขที่ 2: มีการกดปุ่มบน Keypad ให้รีเซ็ตเวลานับถอยหลังคืนโต๊ะทันที (จะไม่นับเวลาคืนโต๊ะ)
+    lastMovementTime = millis();
 
     if (currentState == STATE_CONFIRM_OFF) {
       if (key == 'A') {
@@ -493,12 +506,14 @@ void loop() {
       }
     }
     else if (currentState == STATE_OCCUPIED) {
+      unsigned long elapsed = isPaused ? (pauseStartTime - officeSyndromeStartTime) : (millis() - officeSyndromeStartTime);
+      bool isExpired = (elapsed >= officeSyndromeDuration);
+
       if (key == 'A') {
-        unsigned long elapsed = isPaused ? (pauseStartTime - officeSyndromeStartTime) : (millis() - officeSyndromeStartTime);
-        if (elapsed >= officeSyndromeDuration) {
-          startOccupiedSession();
+        if (isExpired) {
+          startOccupiedSession(); // เมื่อนับเวลาครบแล้ว กด A (again) จะเริ่มนับรอบใหม่ทันที
         } else {
-          isPaused = !isPaused;
+          isPaused = !isPaused;   // ยังไม่หมดเวลา กด A สลับ Pause/Resume
           if (isPaused) {
             pauseStartTime = millis();
           } else {
@@ -511,14 +526,14 @@ void loop() {
       else if (key == 'B') {
         isPaused = false;
         setRGBColorMode(COLOR_OFF, true);
-        currentState = STATE_SET_TIME;
+        currentState = STATE_SET_TIME; // กด B (back) กลับไปหน้าตั้งเวลา
         inputBuffer = "";
         redrawCurrentStateLCD();
       }
     }
   }
 
-  // 2. การอัปเดตหน้าจอ LCD และไฟ RGB
+  // 2. การอัปเดตหน้าจอ LCD และไฟ RGB ตามปกติ
   // ----------------------------------------------------
   if (millis() - lastLcdUpdate >= 200) {
     lastLcdUpdate = millis();
@@ -538,6 +553,7 @@ void loop() {
       }
 
       if (elapsed < officeSyndromeDuration) {
+        lastTimeExpired = false;
         unsigned long remaining = (officeSyndromeDuration - elapsed) / 1000UL;
         int mins = remaining / 60;
         int secs = remaining % 60;
@@ -564,15 +580,15 @@ void loop() {
           setRGBColorMode(COLOR_RED);
         }
       } else {
-        if (lastMins != 0 || lastSecs != 0 || isPaused != lastPauseState) {
-          lastMins = 0;
-          lastSecs = 0;
-          lastPauseState = isPaused;
-
-          lcd.setCursor(0, 0); lcd.print(" !!Move Around!!");
-          lcd.setCursor(0, 1); lcd.print("A|Again   B|Back");
+        // เมื่อนับเวลานั่งทำงานครบกำหนดแล้ว
+        if (!lastTimeExpired) {
+          lastTimeExpired = true;
+          lcd.clear();
+          lcd.setCursor(0, 0); lcd.print("  Move Around   "); // บรรทัดบน
+          lcd.setCursor(0, 1); lcd.print("A|again   B|back"); // บรรทัดล่าง
         }
 
+        // กะพริบไฟสีแดงเตือนให้ลุกเปลี่ยนอิริยาบถ
         if ((millis() / 1000) % 2 == 0) {
           setRGBColorMode(COLOR_RED);
         } else {
@@ -580,9 +596,12 @@ void loop() {
         }
       }
     }
+    else if (currentState == STATE_BOOKED || currentState == STATE_ENTER_PIN) {
+      setRGBColorMode(COLOR_BLUE);
+    }
   }
 
-  // 3. อ่านค่าเซนเซอร์ และจัดการการแสดงผลบน Serial Monitor
+  // 3. อ่านค่าเซนเซอร์ และตรวจจับเวลานับถอยหลังคืนโต๊ะ
   // ----------------------------------------------------
   if (millis() - lastSensorRead >= 1000) {
     lastSensorRead = millis();
@@ -591,22 +610,31 @@ void loop() {
     delay(30); // หน่วงเวลาเล็กน้อยเพื่อป้องกันคลื่นกวนกันระหว่าง U1 และ U2
     float d2 = readUltrasonic(TRIG_2, ECHO_2);
 
-    // ตรวจจับคน: ถ้าเซนเซอร์ข้างใดข้างหนึ่งอ่านค่าได้มากกว่า 0 และน้อยกว่าหรือเท่ากับ 80 cm ถือว่า "มีคนอยู่"
-    bool isPersonPresent = (d1 > 0.0 && d1 <= 80.0) || (d2 > 0.0 && d2 <= 80.0);
+    // เงื่อนไขที่ 1: ถ้าเซนเซอร์อ่านค่าได้ <= DISTANCE_THRESHOLD (80.0 cm) ถือว่ามีคนอยู่ -> รีเซ็ตเวลา ไม่คืนโต๊ะ
+    bool currentlyPresent = (d1 > 0.0 && d1 <= DISTANCE_THRESHOLD) || (d2 > 0.0 && d2 <= DISTANCE_THRESHOLD);
 
-    if (isPersonPresent) {
-      lastMovementTime = millis(); // ถ้านั่งอยู่หน้าโต๊ะ (< 80 cm) ให้รีเซ็ตเวลานับถอยหลังเสมอ
+    if (currentlyPresent) {
+      if (!isPersonPresent) {
+        isPersonPresent = true;
+        if (currentState == STATE_BOOKED || currentState == STATE_ENTER_PIN) {
+          setRGBColorMode(COLOR_BLUE, true);
+        }
+        redrawCurrentStateLCD();
+      }
+      lastMovementTime = millis(); // ถ้านั่งอยู่หน้าโต๊ะ (<= DISTANCE_THRESHOLD) ให้รีเซ็ตเวลานับถอยหลังเสมอ (จะไม่นับเวลาคืนโต๊ะ)
+    } else {
+      isPersonPresent = false;
     }
 
     // เช็กสถานะว่าโต๊ะถูกจองแล้วหรือกำลังทำงานอยู่ (ไม่นับตอน VACANT และ OFF)
     bool isDeskActive = (currentState != STATE_VACANT && currentState != STATE_OFF);
 
-    // แปลงระยะทางเป็นข้อความเพื่อแสดงบน Serial Monitor ตามความยาวจริง
+    // แปลงระยะทางเป็นข้อความเพื่อแสดงบน Serial Monitor
     char u1Str[12], u2Str[12];
     if (d1 < 0) sprintf(u1Str, "---.-cm"); else sprintf(u1Str, "%.1fcm", d1);
     if (d2 < 0) sprintf(u2Str, "---.-cm"); else sprintf(u2Str, "%.1fcm", d2);
 
-    // เงื่อนไข: โต๊ะถูกจองแล้ว/กำลังทำงาน และ "ไม่มีคนอยู่" (ระยะทางทั้ง 2 ข้าง > 80 cm)
+    // เงื่อนไขการนับเวลาคืนโต๊ะ: โต๊ะถูกใช้งานอยู่ และ "ไม่มีคนอยู่" (ระยะทางทั้ง 2 ข้าง > DISTANCE_THRESHOLD)
     if (isDeskActive && !isPersonPresent) {
       unsigned long noMovementDuration = millis() - lastMovementTime;
       unsigned long remainingSec = (AUTO_LOGOUT_TIMEOUT > noMovementDuration) 
@@ -616,7 +644,7 @@ void loop() {
       int remainMins = remainingSec / 60;
       int remainSecs = remainingSec % 60;
 
-      // แสดงระยะจริง พร้อมเวลานับถอยหลัง TimeOut
+      // แสดงระยะจริง พร้อมเวลานับถอยหลัง TimeOut บน Serial Monitor
       char serialBuf[120];
       snprintf(serialBuf, sizeof(serialBuf), 
                "U1 : %-8s TimeOut %02d:%02d U2 : %-8s", 
@@ -629,10 +657,10 @@ void loop() {
         if (mqttClient.connected()) {
           mqttClient.publish(TOPIC_COMMAND.c_str(), "LOGOUT", false);
         }
-        resetToVacant();
+        resetToVacant(); // คืนโต๊ะและตัดเข้าสู่หน้า VACANT ทันที
       }
     } 
-    // สภาวะปกติ (VACANT / OFF หรือ มีคนนั่งอยู่หน้าโต๊ะ): แสดงระยะทางจริงของ U1 และ U2
+    // สภาวะปกติ: แสดงระยะทางจริงของ U1 และ U2 บน Serial Monitor
     else {
       char serialBuf[120];
       snprintf(serialBuf, sizeof(serialBuf), 
