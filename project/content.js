@@ -14,6 +14,7 @@ window.PROJECT_CONTENT = {
     hardware5: "pic/keypad.jpg", // รูป Keypad 4×4 เช่น "pic/gear5.jpg"
     hardware6: "pic/led.jpg", // รูป RGB LED เช่น "pic/gear6.jpg"
     hardware7: "pic/tmp36.jpg", // รูป TMP36 Temperature Sensor เช่น "pic/gear7.jpg"
+    connection: "pic/process-connection.png", // รูป PROCESS & CONNECTION ที่แนบมา (เปลี่ยนไฟล์รูปได้ที่นี่)
     diagram: "", // แผนภาพระบบ
     workflow1: "pic/1.please booking.jpg", // รูปขั้นตอน 01 เลือกโต๊ะว่าง เช่น "pic/step1.jpg"
     workflow2: "pic/3 enterpass.jpg", // รูปขั้นตอน 02 รับรหัส PIN เช่น "pic/step2.jpg"
@@ -21,7 +22,8 @@ window.PROJECT_CONTENT = {
     prototype: "pic/resu1.jpg", // รูปชิ้นงานจริง
     website: "pic/resu2.jpg", // รูปหน้าจอ SmartDesk
     timer: "pic/9 green countdown.jpg", // รูปฟีเจอร์การตั้งเวลา เช่น "pic/set-time.jpg"
-    moveAround: "pic/11 move around.jpg" // รูปไฟสีแดงแจ้งเตือน Move Around เช่น "pic/move-around.jpg"
+    moveAround: "pic/11 move around.jpg", // รูปไฟสีแดงแจ้งเตือน Move Around เช่น "pic/move-around.jpg"
+    temperature: "pic/7. A_roomtemp (1).jpg" // รูป LCD แสดงอุณหภูมิ เช่น "pic/temp-result.jpg"
   },
   members: [
   {
@@ -34,7 +36,7 @@ window.PROJECT_CONTENT = {
     name: "นายภควรรษ หันหลวงราช",
     id: "68070131",
     role: "Embedded Firmware & Hardware Engineer",
-    image: "pic/member2.jpg"
+    image: "pic/luffy icon __one piece.jpg"
   },
   {
     name: "นายภูสิทธิ์ รุ่งเรือง",

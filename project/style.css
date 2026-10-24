@@ -130,3 +130,102 @@
   .usage-guide .step-photo { aspect-ratio: 16 / 10; }
   .results .result-grid { grid-template-columns: 1fr; gap: 26px; }
 }
+
+
+/* SEAT SENSE — Software & Connection (เพิ่มช่องรูปที่เปลี่ยนผ่าน content.js ได้) */
+.tech-line {
+  display: block;
+  border-top: 1px solid var(--line);
+  padding-top: 26px;
+  margin-top: 38px;
+}
+.tech-line > .small-label { margin-bottom: 18px; }
+.tech-content {
+  display: grid;
+  grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+  align-items: start;
+  gap: 28px;
+}
+.tech-copy h3 { font-size: 20px; font-weight: 600; margin: 0 0 12px; }
+.tech-copy p { font-size: 14px; line-height: 1.9; color: var(--muted); margin: 0 0 14px; }
+.tech-copy .tech-stack { font-size: 12px; font-weight: 600; color: var(--green); }
+.connection-photo {
+  background: #eef5ef;
+  border: 1px solid #c8ddcf;
+  border-radius: 18px;
+  overflow: hidden;
+  min-height: 255px;
+  padding: 23px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.connection-visual {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 75px minmax(0, 1fr) 58px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+.connection-node {
+  min-height: 143px;
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #c8ddcf;
+  border-radius: 15px;
+  padding: 14px 9px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 5px;
+}
+.connection-node-center { background: #e1efe5; }
+.connection-node strong { font: 700 12px/1.4 Manrope,'Noto Sans Thai',sans-serif; color: #1b5140; }
+.connection-node small { color: var(--muted); font-size: 10px; line-height: 1.5; }
+.connection-icon { color: #32775c; font: 600 31px/1 Manrope,sans-serif; margin-bottom: 7px; }
+.connection-link { color: #417a60; text-align: center; min-width: 0; }
+.connection-link span:first-child { display: block; font: 600 9px/1.6 Manrope,sans-serif; }
+.connection-arrow { display: block; font-size: 26px; line-height: 1.2; }
+.connection-caption { display: block; font-size: 10px; line-height: 1.65; color: #728277; margin-top: 14px; text-align: center; }
+.connection-photo.has-image { padding: 0; min-height: 0; aspect-ratio: 16/9; }
+.connection-photo.has-image img { display: block; width: 100%; height: 100%; object-fit: contain; background: white; }
+.results .result-grid .result-photo.has-image img { object-fit: contain; background: white; }
+@media(max-width: 1080px) {
+  .tech-content { grid-template-columns: 1fr; }
+  .connection-photo { min-height: 225px; }
+}
+@media(max-width: 680px) {
+  .connection-photo { padding: 18px 12px; min-height: 0; }
+  .connection-visual { grid-template-columns: 1fr; gap: 5px; }
+  .connection-node { min-height: 78px; }
+  .connection-icon { margin: 0; font-size: 23px; }
+  .connection-link { display: flex; flex-direction: column; align-items: center; }
+  .connection-arrow { transform: rotate(90deg); font-size: 22px; }
+}
+
+/* PROCESS & CONNECTION — ใช้ภาพที่ผู้จัดทำแนบมา อัตราส่วนเดิม ไม่ตัดภาพ */
+.tech-content {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+.connection-photo.has-image {
+  width: 100%;
+  max-width: 1000px;
+  min-height: 0;
+  aspect-ratio: auto;
+  margin-inline: auto;
+  padding: 0;
+  border: 1px solid #c8ddcf;
+  border-radius: 16px;
+  background: #b6d8b8;
+}
+.connection-photo.has-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  background: #b6d8b8;
+}

@@ -10,6 +10,42 @@
   <link rel="stylesheet" href="style.css">
   <script src="content.js" defer></script>
   <script src="script.js" defer></script>
+
+<style>
+/* PROCESS & CONNECTION: แผนภาพที่มีข้อความครบในไฟล์ HTML เดียว */
+.pc-diagram {
+  width: 100%;
+  background: #b7d9bb;
+  color: #123e2f;
+  border-radius: 14px;
+  padding: 22px 24px 26px;
+  border: 1px solid #a3c8ae;
+  font-family: 'Noto Sans Thai', Tahoma, sans-serif;
+}
+.pc-diagram__title { font-size: 22px; font-weight: 650; letter-spacing: .3px; margin: 0 0 20px; line-height: 1.4; }
+.pc-diagram__layout {
+  display: grid;
+  grid-template-columns: minmax(150px,1fr) minmax(150px,1.1fr) minmax(150px,1fr) minmax(150px,1.1fr) minmax(150px,1fr);
+  align-items: end;
+  gap: 11px;
+}
+.pc-diagram__device { display:flex; flex-direction:column; align-items:center; min-width:0; gap:7px; text-align:center; }
+.pc-diagram__icon { width: 100%; height: 122px; max-width: 170px; color:#124b35; }
+.pc-diagram__device-name { font-family: Manrope,'Noto Sans Thai',sans-serif; font-size: 12px; font-weight:650; letter-spacing:.05px; line-height:1.5; }
+.pc-diagram__exchange { display:flex; flex-direction:column; justify-content:space-between; align-self:stretch; padding: 4px 0 26px; text-align:center; min-width:0; }
+.pc-diagram__message { font-size: 15px; font-weight:500; line-height:1.35; }
+.pc-diagram__message--return { margin-top:6px; }
+.pc-diagram__arrow { display:block; width:100%; height:21px; color:#0d3d2e; }
+.pc-diagram__arrow line { stroke:currentColor; stroke-width:4; }
+.pc-diagram__arrow polygon { fill:currentColor; }
+.pc-diagram__arrow--forward { margin:7px 0; }
+.pc-diagram__arrow--return { margin:7px 0 0; }
+@media (max-width: 870px) {
+  .pc-diagram { overflow-x: auto; }
+  .pc-diagram__layout { min-width: 790px; }
+  .pc-diagram__title { font-size:20px; }
+}
+</style>
 </head>
 <body>
 <a class="skip" href="#main">ข้ามไปเนื้อหา</a>
@@ -81,7 +117,77 @@
     <article class="hardware-card"><div class="hardware-photo media-slot" data-image="hardware6"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มรูป RGB LED</span></div><span class="small-label">06 / INDICATOR</span><h3>RGB LED</h3><p>ไฟแสดงสถานะด้วยสีต่าง ๆ ช่วยให้ผู้ใช้งานทราบสถานะโต๊ะได้อย่างรวดเร็ว</p></article>
     <article class="hardware-card"><div class="hardware-photo media-slot" data-image="hardware7"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มรูปเซนเซอร์ TMP36</span></div><span class="small-label">07 / SENSOR</span><h3>TMP36 Temperature Sensor</h3><p>เซนเซอร์วัดอุณหภูมิแบบแอนะล็อก เชื่อมต่อกับ Arduino ผ่านขา A0 เพื่ออ่านค่าอุณหภูมิและส่งข้อมูลให้ระบบ SmartDesk</p></article>
   </div>
-  <div class="tech-line"><span class="small-label">SOFTWARE &amp; CONNECTION</span><p>[เพิ่มภาษา ไลบรารี และเทคโนโลยีที่กลุ่มใช้จริง]</p></div>
+  <div class="tech-line">
+    <span class="small-label">SOFTWARE &amp; CONNECTION</span>
+    <div class="tech-content">
+      <div class="tech-copy">
+        <h3>การเชื่อมต่อฮาร์ดแวร์กับระบบ SmartDesk</h3>
+        <p>
+          Arduino UNO R4 WiFi รับข้อมูลจาก Ultrasonic Sensor และ TMP36
+          แล้วส่งสถานะที่นั่งและค่าอุณหภูมิผ่าน Wi-Fi ด้วยโปรโตคอล MQTT
+          ไปยัง MQTT Broker เพื่อให้ระบบที่เชื่อมต่อรับข้อมูลไปใช้งานต่อได้
+        </p>
+        <p class="tech-stack">Arduino C/C++ · WiFiS3 · PubSubClient (MQTT) · LCD I2C · SmartDesk</p>
+      </div>
+      <div class="connection-photo pc-holder">
+  <div class="pc-diagram" role="group" aria-label="PROCESS &amp; CONNECTION การเชื่อมต่อ Arduino, MQTT และ SmartDesk พร้อมข้อมูลที่ส่งและคำสั่งตอบกลับ">
+    <h3 class="pc-diagram__title">PROCESS &amp; CONNECTION</h3>
+    <div class="pc-diagram__layout">
+      <div class="pc-diagram__device">
+        <svg class="pc-diagram__icon" viewBox="0 0 175 125" role="img" aria-label="Arduino UNO R4 WiFi">
+          <rect x="14" y="14" width="146" height="95" rx="14" fill="none" stroke="currentColor" stroke-width="5"/>
+          <rect x="8" y="39" width="31" height="21" rx="2" fill="#b7d9bb" stroke="currentColor" stroke-width="5"/>
+          <rect x="53" y="43" width="49" height="46" rx="4" fill="none" stroke="currentColor" stroke-width="5"/>
+          <rect x="60" y="50" width="35" height="32" rx="2" fill="currentColor" opacity=".18"/>
+          <g stroke="currentColor" stroke-width="5"><path d="M61 30v13m15-13v13m15-13v13M61 89v12m15-12v12m15-12v12M41 52h12M41 68h12M102 52h12M102 68h12"/></g>
+          <rect x="47" y="20" width="79" height="10" rx="4" fill="currentColor"/><rect x="44" y="98" width="89" height="6" rx="3" fill="currentColor"/>
+          <circle cx="132" cy="53" r="8" fill="none" stroke="currentColor" stroke-width="4"/>
+          <circle cx="132" cy="77" r="8" fill="none" stroke="currentColor" stroke-width="4"/>
+        </svg>
+        <div class="pc-diagram__device-name">ARDUINO UNO R4 WIFI</div>
+      </div>
+      <div class="pc-diagram__exchange">
+        <div class="pc-diagram__message">สถานะโต๊ะ / PIN<br> / อุณหภูมิ</div>
+        <svg class="pc-diagram__arrow pc-diagram__arrow--forward" viewBox="0 0 130 24" preserveAspectRatio="none" aria-label="ส่งข้อมูลไปทางขวา"><line x1="3" y1="12" x2="113" y2="12"/><polygon points="113,3 130,12 113,21"/></svg>
+        <svg class="pc-diagram__arrow pc-diagram__arrow--return" viewBox="0 0 130 24" preserveAspectRatio="none" aria-label="ส่งคำสั่งกลับไปทางซ้าย"><line x1="17" y1="12" x2="127" y2="12"/><polygon points="17,3 0,12 17,21"/></svg>
+        <div class="pc-diagram__message pc-diagram__message--return">คำสั่งจองโต๊ะ /<br>คืนโต๊ะ</div>
+      </div>
+      <div class="pc-diagram__device">
+        <svg class="pc-diagram__icon" viewBox="0 0 175 125" role="img" aria-label="HiveMQ MQTT Broker">
+          <g stroke="currentColor" stroke-width="5" fill="none" stroke-linejoin="round">
+          <rect x="26" y="18" width="120" height="31" rx="10"/><rect x="26" y="53" width="120" height="31" rx="10"/><rect x="26" y="88" width="120" height="31" rx="10"/>
+          </g>
+          <g fill="currentColor"><circle cx="42" cy="34" r="5"/><circle cx="42" cy="69" r="5"/><circle cx="42" cy="104" r="5"/>
+          <rect x="76" y="30" width="46" height="7" rx="4"/><rect x="76" y="65" width="46" height="7" rx="4"/><rect x="76" y="100" width="46" height="7" rx="4"/></g>
+          <path d="M101 122h56q13 0 13-12t-13-12q-2-16-19-17-16-1-24 15-18-4-22 10-3 12 9 16Z" fill="#b7d9bb" stroke="currentColor" stroke-width="4"/>
+        </svg>
+        <div class="pc-diagram__device-name">MQTT (HIVEMQ)</div>
+      </div>
+      <div class="pc-diagram__exchange">
+        <div class="pc-diagram__message">สถานะโต๊ะ / PIN<br> / อุณหภูมิ</div>
+        <svg class="pc-diagram__arrow pc-diagram__arrow--forward" viewBox="0 0 130 24" preserveAspectRatio="none" aria-label="ส่งข้อมูลไปทางขวา"><line x1="3" y1="12" x2="113" y2="12"/><polygon points="113,3 130,12 113,21"/></svg>
+        <svg class="pc-diagram__arrow pc-diagram__arrow--return" viewBox="0 0 130 24" preserveAspectRatio="none" aria-label="ส่งคำสั่งกลับไปทางซ้าย"><line x1="17" y1="12" x2="127" y2="12"/><polygon points="17,3 0,12 17,21"/></svg>
+        <div class="pc-diagram__message pc-diagram__message--return">คำสั่งจองโต๊ะ /<br>คืนโต๊ะ</div>
+      </div>
+      <div class="pc-diagram__device">
+        <svg class="pc-diagram__icon" viewBox="0 0 175 125" role="img" aria-label="เว็บไซต์ SmartDesk">
+          <rect x="13" y="8" width="149" height="100" rx="8" fill="none" stroke="currentColor" stroke-width="5"/>
+          <rect x="25" y="20" width="125" height="75" rx="3" fill="none" stroke="currentColor" stroke-width="4"/>
+          <circle cx="36" cy="30" r="3" fill="currentColor"/><circle cx="46" cy="30" r="3" fill="currentColor"/><circle cx="56" cy="30" r="3" fill="currentColor"/>
+          <rect x="34" y="45" width="48" height="39" rx="4" fill="none" stroke="currentColor" stroke-width="4"/>
+          <rect x="36" y="41" width="44" height="9" rx="2" fill="currentColor"/>
+          <rect x="95" y="67" width="10" height="17" rx="2" fill="currentColor"/>
+          <rect x="111" y="56" width="10" height="28" rx="2" fill="currentColor"/>
+          <rect x="127" y="44" width="10" height="40" rx="2" fill="currentColor"/>
+          <path d="M69 109v9m-30 4h90" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+        </svg>
+        <div class="pc-diagram__device-name">WEBSITE SMARTDESK</div>
+      </div>
+    </div>
+  </div>
+</div>
+    </div>
+  </div>
 </div></section>
 <section class="shell section" id="workflow">
   <div class="section-heading"><span class="eyebrow">03 / HOW IT WORKS</span><h2>วิธีใช้งานโต๊ะทำงาน</h2><p>แต่ละโต๊ะรองรับ 2 คน และใช้รหัส PIN ร่วมกันต่อการจอง</p></div>
@@ -108,7 +214,6 @@
       </article>
     </div>
   </div>
-  <div class="diagram-slot media-slot" data-image="diagram"><span class="photo-symbol" aria-hidden="true">＋</span><h3>แผนภาพการทำงานของระบบ</h3><p>เพิ่มรูปการเชื่อมต่อ หรือ Flowchart ของกลุ่มตรงนี้</p></div>
 </section>
 <!-- 04 / PRINCIPLES & CALCULATIONS -->
 <section class="shell section calculations-section" id="calculations" aria-labelledby="calculations-title">
@@ -180,7 +285,7 @@
     <div>
       <span class="eyebrow">05 / THE RESULT</span>
       <h2>ผลลัพธ์และฟีเจอร์การใช้งาน</h2>
-      <p>ชิ้นงานจริง เว็บไซต์ SmartDesk และฟีเจอร์ตั้งเวลาเพื่อเตือนให้เปลี่ยนอิริยาบถ</p>
+      <p>ชิ้นงานจริง เว็บไซต์ SmartDesk ฟีเจอร์ตั้งเวลา การแจ้งเตือน และการแสดงอุณหภูมิ</p>
     </div>
     <a class="text-link" data-link="website" href="../index.html">เปิด SmartDesk <span aria-hidden="true">↗</span></a>
   </div>
@@ -200,6 +305,10 @@
     <figure>
       <div class="result-photo media-slot" data-image="moveAround"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มรูปไฟสีแดงและหน้าจอ Move Around</span></div>
       <figcaption><b>04 / Active Reminder — Move Around</b><span>เมื่อครบเวลาที่ตั้งไว้ ไฟ RGB สีแดงจะกะพริบ และหน้าจอ LCD แสดงข้อความ “Move Around” เพื่อเตือนให้ผู้ใช้ลุกขึ้นยืดเส้นหรือเดินเปลี่ยนอิริยาบถ ก่อนกลับมาทำงานต่อ</span></figcaption>
+    </figure>
+    <figure>
+      <div class="result-photo media-slot" data-image="temperature"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มรูป LCD แสดง RoomTemp</span></div>
+      <figcaption><b>05 / แสดงอุณหภูมิ (Room Temperature)</b><span>กดปุ่ม A ที่ Keypad เพื่อดูอุณหภูมิจากเซนเซอร์ TMP36 บนหน้าจอ LCD เป็นองศาเซลเซียส และกด B เพื่อกลับเมนู โดย Arduino ยังส่งค่าอุณหภูมิผ่าน MQTT ตามรอบการทำงาน</span></figcaption>
     </figure>
   </div>
 </section>
