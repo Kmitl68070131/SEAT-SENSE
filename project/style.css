@@ -25,9 +25,35 @@
 
 
 
-.member-photo.has-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
+/* แสดงวัตถุประสงค์เต็มความกว้าง */
+.about-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
 }
+
+.objectives {
+  width: 100%;
+  border-left: none;
+  padding-left: 0;
+}
+
+
+/* SEAT SENSE: 6 hardware items and 3-step usage card */
+.hardware-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 20px; }
+.usage-guide { padding: 26px 30px 30px; border: 1px solid var(--line); border-radius: 18px; background: #fff; }
+.usage-title { margin: 0 0 22px; font-size: 21px; font-weight: 600; }
+.usage-guide .flow-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; border: 0; }
+.usage-guide .flow-grid article { display: block; padding: 0; border: 0; min-width: 0; }
+.usage-guide .flow-top { padding: 0; }
+.usage-guide .flow-top .number { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; border: 1px solid #c4d8ba; background: #eef5e5; color: #3b6a40; font-size: 13px; font-weight: 600; }
+.usage-guide .flow-grid h3 { font-size: 18px; font-weight: 600; margin: 14px 0 6px; }
+.usage-guide .flow-grid p { font-size: 14px; line-height: 1.8; margin: 0; max-width: none; }
+@media (max-width: 760px) {
+  .hardware-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 26px 16px; }
+  .usage-guide { padding: 22px 20px; }
+  .usage-guide .flow-grid { grid-template-columns: 1fr; gap: 20px; }
+  .usage-guide .flow-grid article { padding: 0 0 16px; border-bottom: 1px solid var(--line); }
+  .usage-guide .flow-grid article:last-child { border-bottom: 0; padding-bottom: 0; }
+}
+@media (max-width: 480px) { .hardware-grid { grid-template-columns: 1fr; } }
