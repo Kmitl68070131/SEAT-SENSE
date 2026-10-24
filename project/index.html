@@ -88,9 +88,24 @@
   <div class="usage-guide">
     <h3 class="usage-title">เริ่มใช้งานโต๊ะ 3 ขั้นตอน</h3>
     <div class="flow-grid">
-      <article><div class="flow-top"><span class="number">01</span></div><h3>เลือกโต๊ะว่าง</h3><p>กด “จองโต๊ะนี้” เพื่อจองโต๊ะสำหรับ 2 คน</p></article>
-      <article><div class="flow-top"><span class="number">02</span></div><h3>รับรหัส PIN</h3><p>นำรหัส PIN ที่ได้รับไปกรอกที่ Keypad ของโต๊ะ</p></article>
-      <article><div class="flow-top"><span class="number">03</span></div><h3>เริ่มทำงาน</h3><p>เมื่อเสร็จแล้ว กดคืนโต๊ะได้เลย</p></article>
+      <article>
+        <div class="flow-top"><span class="number">01</span></div>
+        <div class="step-photo media-slot" data-image="workflow1"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มรูปขั้นตอนเลือกโต๊ะว่าง</span></div>
+        <h3>เลือกโต๊ะว่าง</h3>
+        <p>กด “จองโต๊ะนี้” เพื่อจองโต๊ะสำหรับ 2 คน</p>
+      </article>
+      <article>
+        <div class="flow-top"><span class="number">02</span></div>
+        <div class="step-photo media-slot" data-image="workflow2"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มรูปขั้นตอนกรอกรหัส PIN</span></div>
+        <h3>รับรหัส PIN</h3>
+        <p>นำรหัส PIN ที่ได้รับไปกรอกที่ Keypad ของโต๊ะ</p>
+      </article>
+      <article>
+        <div class="flow-top"><span class="number">03</span></div>
+        <div class="step-photo media-slot" data-image="workflow3"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มรูปขั้นตอนเริ่มใช้งาน</span></div>
+        <h3>เริ่มทำงาน</h3>
+        <p>เมื่อเสร็จแล้ว กดคืนโต๊ะได้เลย</p>
+      </article>
     </div>
   </div>
   <div class="diagram-slot media-slot" data-image="diagram"><span class="photo-symbol" aria-hidden="true">＋</span><h3>แผนภาพการทำงานของระบบ</h3><p>เพิ่มรูปการเชื่อมต่อ หรือ Flowchart ของกลุ่มตรงนี้</p></div>
@@ -121,13 +136,7 @@
         <li><strong>V</strong> — แรงดันไฟฟ้า หน่วยโวลต์ (V)</li>
         <li><strong>T</strong> — อุณหภูมิ หน่วยองศาเซลเซียส (°C)</li>
       </ul>
-      <p class="formula-note"><strong>หมายเหตุ:</strong> ค่า +20°C เป็นค่าชดเชยที่กำหนดเพิ่มในโค้ดของโครงงาน ไม่ใช่สูตรมาตรฐาน TMP36 และควรสอบเทียบกับอุณหภูมิจริง</p>
-      <div class="formula-code-label">ตัวอย่างจาก Arduino.ino</div>
-      <pre class="formula-code"><code>float voltage = avgRaw * (5.0 / 1023.0);
-float rawTemp = ((voltage - 0.5) * 100.0) + 20.0;
-smoothedTemp = (0.05 * rawTemp)
-             + (0.95 * smoothedTemp);</code></pre>
-      <p class="formula-footnote">ค่าที่วัดได้ถูกกรองด้วย Exponential Moving Average (EMA) เพื่อลดความผันผวนก่อนนำไปแสดงผล</p>
+
     </article>
 
     <article class="formula-card">
@@ -137,20 +146,13 @@ smoothedTemp = (0.05 * rawTemp)
       <div class="equation-panel" aria-label="สูตรคำนวณระยะทาง">
         <span class="equation-caption">สูตรระยะทาง (เซนติเมตร)</span>
         <div class="equation">d = (t × 0.0343) / 2</div>
-        <span class="equation-caption equation-caption-gap">ตัวอย่าง เมื่อ t = 1,000 µs</span>
-        <div class="equation">d = 17.15 cm</div>
       </div>
       <ul class="formula-terms">
         <li><strong>d</strong> — ระยะทาง หน่วยเซนติเมตร (cm)</li>
         <li><strong>t</strong> — เวลาเดินทางไป–กลับของคลื่นเสียง หน่วยไมโครวินาที (µs)</li>
         <li><strong>0.0343</strong> — ความเร็วเสียงโดยประมาณ (cm/µs) และหาร 2 เพราะคลื่นเสียงเดินทางสองเที่ยว</li>
       </ul>
-      <p class="formula-note"><strong>การใช้งานจริง:</strong> โค้ดกำหนดเกณฑ์ 80 cm หากเซนเซอร์ตรวจพบผู้ใช้อย่างน้อยหนึ่งตำแหน่งภายในระยะนี้ ระบบจะถือว่ายังมีคนอยู่ที่โต๊ะ</p>
-      <div class="formula-code-label">ตัวอย่างจาก Arduino.ino</div>
-      <pre class="formula-code"><code>long duration = pulseIn(echoPin, HIGH, 30000);
-if (duration == 0) return -1.0;
-return (duration * 0.0343) / 2.0;</code></pre>
-      <p class="formula-footnote">หากไม่ได้รับสัญญาณสะท้อนภายในเวลาที่กำหนด ฟังก์ชันจะคืนค่า −1 เพื่อระบุว่าอ่านระยะไม่ได้</p>
+
     </article>
 
     <article class="formula-card">
@@ -168,26 +170,39 @@ return (duration * 0.0343) / 2.0;</code></pre>
         <li><strong>a, c, m</strong> — ตัวคูณ ค่าบวก และตัวหารเอาเศษตามลำดับ</li>
         <li><strong>PIN</strong> — ค่าที่ได้ถูกจัดรูปแบบเป็นตัวเลข 4 หลัก เช่น 0042</li>
       </ul>
-      <p class="formula-note"><strong>ในโค้ดจริง:</strong> การคูณและบวกใช้ชนิด <code>uint32_t</code> จึงอาจมีการวนค่าที่ 32 บิตก่อนทำ <code>% 9999</code> และค่าเริ่มต้นถูกกำหนดจาก <code>millis() + analogRead(A0)</code></p>
-      <div class="formula-code-label">ตัวอย่างจาก Arduino.ino</div>
-      <pre class="formula-code"><code>lcg_seed = (A * lcg_seed + C) % m;
-char pinBuf[5];
-snprintf(pinBuf, sizeof(pinBuf), "%04lu",
-         (unsigned long)lcg_seed);</code></pre>
-      <p class="formula-footnote">LCG เป็นการสุ่มเทียมที่คาดเดาได้ จึงเหมาะกับการศึกษาหลักการมากกว่าระบบที่ต้องการ PIN ความปลอดภัยสูง</p>
+
     </article>
   </div>
 </section>
 
-<section class="shell section results" id="results"><div class="section-heading heading-row"><div><span class="eyebrow">05 / THE RESULT</span><h2>เมื่อชิ้นงานเชื่อมกับเว็บไซต์</h2><p>ภาพชิ้นงานจริงและหน้าระบบที่พัฒนาขึ้น</p></div><a class="text-link" data-link="website" href="../index.html">เปิด SmartDesk <span aria-hidden="true">↗</span></a></div>
-<div class="result-grid"><figure><div class="result-photo media-slot" data-image="prototype"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มภาพชิ้นงานจริง</span></div><figcaption><b>01 / ชิ้นงาน</b><span>ชิ้นงานต้นแบบระบบ SEAT SENSE ที่พัฒนาขึ้น
-  โดยใช้ไมโครคอนโทรลเลอร์ Arduino
-  ทำงานร่วมกับเซนเซอร์ Ultrasonic
-  เพื่อตรวจจับการใช้งานที่นั่ง
-  และแสดงสถานะผ่านหน้าจอ LCD</span></figcaption></figure><figure><div class="result-photo media-slot" data-image="website"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มภาพหน้าจอ SmartDesk</span></div><figcaption><b>02 / เว็บไซต์ระบบ</b><span>เว็บไซต์ SmartDesk สำหรับแสดงข้อมูล
-  และสถานะการใช้งานที่นั่ง
-  เพื่อช่วยให้ผู้ใช้ตรวจสอบที่นั่งว่าง
-  และใช้งานระบบได้อย่างสะดวก</span></figcaption></figure></div></section>
+<section class="shell section results" id="results">
+  <div class="section-heading heading-row">
+    <div>
+      <span class="eyebrow">05 / THE RESULT</span>
+      <h2>ผลลัพธ์และฟีเจอร์การใช้งาน</h2>
+      <p>ชิ้นงานจริง เว็บไซต์ SmartDesk และฟีเจอร์ตั้งเวลาเพื่อเตือนให้เปลี่ยนอิริยาบถ</p>
+    </div>
+    <a class="text-link" data-link="website" href="../index.html">เปิด SmartDesk <span aria-hidden="true">↗</span></a>
+  </div>
+  <div class="result-grid">
+    <figure>
+      <div class="result-photo media-slot" data-image="prototype"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มภาพชิ้นงานจริง</span></div>
+      <figcaption><b>01 / ชิ้นงานต้นแบบ</b><span>Arduino ทำงานร่วมกับเซนเซอร์ Ultrasonic และหน้าจอ LCD เพื่อตรวจจับการใช้งานที่นั่งและแสดงสถานะของระบบ SEAT SENSE</span></figcaption>
+    </figure>
+    <figure>
+      <div class="result-photo media-slot" data-image="website"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มภาพหน้าจอ SmartDesk</span></div>
+      <figcaption><b>02 / เว็บไซต์ SmartDesk</b><span>เว็บไซต์ช่วยให้ผู้ใช้ตรวจสอบสถานะที่นั่งว่าง จองโต๊ะ และรับรหัส PIN เพื่อยืนยันการใช้งานที่โต๊ะจริง</span></figcaption>
+    </figure>
+    <figure>
+      <div class="result-photo media-slot" data-image="timer"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มรูปการตั้งเวลาบน LCD / Keypad</span></div>
+      <figcaption><b>03 / ฟีเจอร์ตั้งเวลา (Set Time)</b><span>หลังยืนยันรหัส PIN ผู้ใช้กด B บน Keypad เพื่อเข้าสู่เมนูตั้งเวลา กรอกจำนวนนาทีและกด D เพื่อเริ่มนับถอยหลัง หรือใช้ค่าเริ่มต้น 45 นาทีเมื่อไม่กรอกเวลา</span></figcaption>
+    </figure>
+    <figure>
+      <div class="result-photo media-slot" data-image="moveAround"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มรูปไฟสีแดงและหน้าจอ Move Around</span></div>
+      <figcaption><b>04 / Active Reminder — Move Around</b><span>เมื่อครบเวลาที่ตั้งไว้ ไฟ RGB สีแดงจะกะพริบ และหน้าจอ LCD แสดงข้อความ “Move Around” เพื่อเตือนให้ผู้ใช้ลุกขึ้นยืดเส้นหรือเดินเปลี่ยนอิริยาบถ ก่อนกลับมาทำงานต่อ</span></figcaption>
+    </figure>
+  </div>
+</section>
 <section class="resources-section" id="resources"><div class="shell section"><div class="section-heading"><span class="eyebrow">06 / EXPLORE THE PROJECT</span><h2>รู้จักโปรเจกต์ให้มากขึ้น</h2><p>รวมเว็บไซต์ คลิปพรีเซนต์ โค้ด และเอกสารไว้ที่นี่</p></div>
 <div class="resource-grid">
 <a class="resource pending" data-link="video" aria-disabled="true"><span class="resource-icon" aria-hidden="true">▷</span><div class="resource-copy"><span class="small-label">VIDEO PRESENTATION</span><h3>คลิปพรีเซนต์</h3><p>ที่มา แนวคิด และสาธิตการทำงาน</p><span class="resource-status">รอเพิ่มลิงก์</span></div><span class="resource-arrow" aria-hidden="true">↗</span></a>
