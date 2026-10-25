@@ -3,23 +3,22 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 
-// 1. ตั้งค่าการเชื่อมต่อและการกำหนดค่าระบบ (USER CONFIGURATION)
+// 1. CONFIGURATION
 // ==========================================
-const char* SECRET_SSID         = "J Park 3809";             // wifi name
-const char* SECRET_PASS         = "38094573";           // wifi Password
-const char* MQTT_BROKER         = "broker.hivemq.com";
-const int   MQTT_PORT           = 1883;
-const char* TABLE_BOARD_ID      = "A0";                 // ชื่อโต๊ะ 
+const char* SECRET_SSID = "J Park 3809";                        // wifi name
+const char* SECRET_PASS = "38094573";                           // wifi Password
+const char* MQTT_BROKER = "broker.hivemq.com";
+const int   MQTT_PORT = 1883;
+const char* TABLE_BOARD_ID = "Pear1_A1";                              // ชื่อโต๊ะ 
+const float DISTANCE_THRESHOLD = 80.0;                          // ระยะห่างสำหรับคืืนโต๊ะ
+const unsigned long AUTO_LOGOUT_TIMEOUT = 0.5 * 60 * 1000UL;    // เวลาสำหรับคืนโต๊ะอัตโนมัติเมื่อไม่มีคนอยู่ (ตั้งไว้ 30 วินาที)
+const double tmp_calibrate = 24.0;   //ตั้งชดเชยอุณหภูมิ
 
-// ตัวแปรตั้งค่าระยะทางและเวลาสำหรับการ คืนโต๊ะ (Logout)
-const float DISTANCE_THRESHOLD  = 80.0;                 // ระยะทาง (cm) ถ้าน้อยกว่าหรือเท่ากับค่านี่ ถือว่ามีคนอยู่ (จะไม่นับเวลาคืนโต๊ะ)
-const unsigned long AUTO_LOGOUT_TIMEOUT = 0.5 * 60 * 1000UL; // เวลาสำหรับคืนโต๊ะอัตโนมัติเมื่อไม่มีคนอยู่ (ตั้งไว้ 30 วินาที)
-
-// 2. การกำหนดขาพอร์ต (PIN MAPPING)
+// 2. การกำหนดขาพอร์ต
 // ==========================================
 const int TRIG_1 = 2, ECHO_1 = 3;  // Ultrasonic 1
 const int TRIG_2 = 4, ECHO_2 = 5;  // Ultrasonic 2
-const int TMP36_PIN = A0;          // TMP36 Temp Sensor
+const int TMP36_PIN = A0;          // TMP36
 const int LED_R = A1, LED_G = A2, LED_B = A3; // RGB LED
 
 const byte ROW_PINS[4] = {6, 7, 8, 9};
@@ -36,7 +35,6 @@ String TOPIC_PIN      = "smartdesk/" + String(TABLE_BOARD_ID) + "/pin";
 String TOPIC_COMMAND  = "smartdesk/" + String(TABLE_BOARD_ID) + "/command";
 String TOPIC_ONLINE   = "smartdesk/" + String(TABLE_BOARD_ID) + "/online";
 
-// 3. ตัวแประบบและสถานะ (SYSTEM STATES)
 // ==========================================
 enum DeskState {
   STATE_OFF,
@@ -70,19 +68,16 @@ String generatedPin = "";
 String inputBuffer = "";
 bool isPinScreenActive = false;
 
-// ตัวแปรสถานะการตรวจจับคน
-bool isPersonPresent = false;
+bool isPersonPresent = false; //  สถานะตรวจจับคน
 
-// ตัวแประบบนับเวลาหน้า Welcome
-unsigned long welcomeStartTime = 0;
+unsigned long welcomeStartTime = 0;//นับเวลาหน้า welcome
 
-// ตัวแประบบนับถอยหลังและ Pause
-bool isPaused = false;
+bool isPaused = false; // ตัวแประบบนับถอยหลังและ Pause
 unsigned long pauseStartTime = 0;
 int lastMins = -1;
 int lastSecs = -1;
 bool lastPauseState = false;
-bool lastTimeExpired = false; // แฟล็กเช็กการแสดงผลเมื่อหมดเวลา Office Syndrome
+bool lastTimeExpired = false; // เช็กการแสดงผลเมื่อหมดเวลา Office Syndrome
 
 unsigned long lastSensorRead = 0;
 unsigned long lastTempPublish = 0;
@@ -94,12 +89,11 @@ unsigned long lastMqttReconnect = 0;
 
 float smoothedTemp = -999.0;
 
-// ตัวแปรสำหรับสแกน Keypad แบบ Non-blocking
-char lastKeyPressed = 0;
+char lastKeyPressed = 0;// ตัวแปรสำหรับสแกน Keypad
 unsigned long keyPressTime = 0;
 bool keyHandled = false;
 
-// 4. ฟังก์ชันไฟ RGB LED (Common Anode Logic)
+// 3. ฟังก์ชันไฟ RGB LED
 // ==========================================
 void setRGBColorMode(LedColorMode mode, bool force = false) {
   if (!force && currentLedColor == mode) return;
@@ -109,7 +103,7 @@ void setRGBColorMode(LedColorMode mode, bool force = false) {
   digitalWrite(LED_B, (mode == COLOR_BLUE)  ? LOW : HIGH);
 }
 
-// 5. ฟังก์ชันสุ่มรหัส PIN (LCG Algorithm)
+// 4. ฟังก์ชันสุ่มรหัส PIN แบบ เลขสุ่มเที่ยมจากอาจารแบ้งดิสครีท
 // ==========================================
 String generateLCGPin() {
   uint32_t A = 1664525;
@@ -122,7 +116,7 @@ String generateLCGPin() {
   return String(pinBuf);
 }
 
-// 6. ฟังก์ชันอ่านค่าเซนเซอร์
+// ถ. ฟังก์ชันอ่านค่าเซนเซอร์
 // ==========================================
 float readUltrasonic(int trigPin, int echoPin) {
   digitalWrite(trigPin, LOW); delayMicroseconds(4);
@@ -141,13 +135,13 @@ float readTMP36() {
   }
   float avgRaw = (float)sumRaw / 10.0;
   float voltage = avgRaw * (5.0 / 1023.0);
-  float rawTemp = ((voltage - 0.5) * 100.0) + 20.0; // ชดเชยค่า +20.0
+  float rawTemp = ((voltage - 0.5) * 100.0) + tmp_calibrate;
   if (smoothedTemp == -999.0) smoothedTemp = rawTemp;
   smoothedTemp = (0.05 * rawTemp) + (0.95 * smoothedTemp);
   return smoothedTemp;
 }
 
-// 7. ฟังก์ชันเปิด/ปิด เครื่อง (Power ON/OFF)
+// 6. ฟังก์ชันเปิด/ปิด
 // ==========================================
 void resetToVacant() {
   currentState = STATE_VACANT;
@@ -166,7 +160,8 @@ void resetToVacant() {
   }
   lcd.clear();
   lcd.setCursor(0, 0); lcd.print(" Please Booking ");
-  lcd.setCursor(0, 1); lcd.print("  [*] Tern Off  ");
+    lcd.setCursor(0, 1); lcd.print("Table : ");
+  lcd.setCursor(8, 1); lcd.print(TABLE_BOARD_ID);
 }
 
 void turnOffMachine() {
@@ -182,13 +177,14 @@ void turnOffMachine() {
   }
 }
 
-// 8. การอัปเดตหน้าจอ LCD ของสถานะต่างๆ
+// 7. LCD I2C
 // ==========================================
 void redrawCurrentStateLCD() {
   lcd.clear();
   if (currentState == STATE_VACANT) {
     lcd.setCursor(0, 0); lcd.print(" Please Booking ");
-    lcd.setCursor(0, 1); lcd.print("  [*] Tern Off  ");
+    lcd.setCursor(0, 1); lcd.print("Table : ");
+    lcd.setCursor(8, 1); lcd.print(TABLE_BOARD_ID);
   } 
   else if (currentState == STATE_BOOKED || currentState == STATE_ENTER_PIN) {
     if (isPinScreenActive) {
@@ -199,8 +195,9 @@ void redrawCurrentStateLCD() {
       lcd.setCursor(0, 0); lcd.print(pinLine);
       lcd.setCursor(0, 1); lcd.print("C|cancel  D|done");
     } else {
-      lcd.setCursor(0, 0); lcd.print("  Please enter  ");
-      lcd.setCursor(0, 1); lcd.print(" your  password ");
+      lcd.setCursor(0, 0); lcd.print(" Enter password ");
+      lcd.setCursor(0, 1); lcd.print("Table : ");
+      lcd.setCursor(8, 1); lcd.print(TABLE_BOARD_ID);
     }
   } 
   else if (currentState == STATE_MENU) {
@@ -228,7 +225,7 @@ void redrawCurrentStateLCD() {
   }
 }
 
-// 9. การรับสัญญาณและการจัดการ MQTT
+// 8. everything about mqqt
 // ==========================================
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
   if (currentState == STATE_OFF) return;
@@ -283,7 +280,7 @@ void maintainMqttConnection() {
   }
 }
 
-// 10. การสแกน Keypad แบบ Non-blocking (Single Press)
+// 9. การสแกน Keypad
 // ==========================================
 char scanKeypad() {
   char keys[4][4] = {
@@ -332,8 +329,8 @@ void startOccupiedSession() {
   lastTimeExpired = false;
   lcd.clear();
 }
-
-// 11. SETUP & LOOP
+// +++++++++++++++++++++++++++++++++++++++++
+// 10. SETUP & LOOP
 // ==========================================
 void setup() {
   Serial.begin(9600);
@@ -372,7 +369,7 @@ void setup() {
 void loop() {
   maintainMqttConnection();
 
-  // ส่งข้อมูลอุณหภูมิ และคำว่า ONLINE เข้า MQTT ทุกๆ 5 วินาทีตราบใดที่ยังเชื่อมต่ออยู่
+  // publish temp, 'ONLINE' ให้ MQTT ทุกๆ 5 วินาที ถ้าออนไลน์
   if (millis() - lastTempPublish >= 5000) {
     lastTempPublish = millis();
     if (mqttClient.connected()) {
@@ -382,18 +379,18 @@ void loop() {
     }
   }
 
-  // แสดงหน้า Welcome 4 วินาที แบบ Non-blocking
+  // แสดงหน้า Welcome 3 วินาที
   if (currentState == STATE_WELCOME) {
-    if (millis() - welcomeStartTime >= 4000) {
+    if (millis() - welcomeStartTime >= 3000) {
       currentState = STATE_MENU;
-      lastMovementTime = millis(); // รีเซ็ตเวลานับถอยหลังใหม่เมื่อเริ่มเข้าสู่หน้า MENU
+      lastMovementTime = millis(); // รีเซ็ตเวลานับถอยหลังตอนเข้าหน้า MENU
       redrawCurrentStateLCD();
     }
   }
 
   char key = scanKeypad();
 
-  // กดปุ่ม '*' เพียงครั้งเดียวเพื่อเปิด/ปิดเครื่อง
+  // กดปุ่ม '*' ครั้งเดียวเพื่อเปิด/ปิดเครื่อง
   if (key == '*') {
     if (currentState == STATE_OFF) {
       lcd.backlight();
@@ -408,10 +405,10 @@ void loop() {
 
   if (currentState == STATE_OFF) return;
 
-  // 1. จัดการปุ่มกด (Keypad Logic)
+  // 1. keypad
   // ----------------------------------------------------
   if (key != 0) {
-    // เงื่อนไขที่ 2: มีการกดปุ่มบน Keypad ให้รีเซ็ตเวลานับถอยหลังคืนโต๊ะทันที (จะไม่นับเวลาคืนโต๊ะ)
+    // ถ้ามีการกดปุ่มบน Keypad ให้รีเซ็ตเวลานับถอยหลังคืนโต๊ะ
     lastMovementTime = millis();
 
     if (currentState == STATE_CONFIRM_OFF) {
@@ -511,9 +508,9 @@ void loop() {
 
       if (key == 'A') {
         if (isExpired) {
-          startOccupiedSession(); // เมื่อนับเวลาครบแล้ว กด A (again) จะเริ่มนับรอบใหม่ทันที
+          startOccupiedSession(); // เมื่อนับเวลานั่งครบแล้ว กด A (again) จะเริ่มนับรอบใหม่ทันที
         } else {
-          isPaused = !isPaused;   // ยังไม่หมดเวลา กด A สลับ Pause/Resume
+          isPaused = !isPaused;   // ยังไม่หมดเวลานั่ง กด A สลับ Pause/Resume
           if (isPaused) {
             pauseStartTime = millis();
           } else {
@@ -526,14 +523,14 @@ void loop() {
       else if (key == 'B') {
         isPaused = false;
         setRGBColorMode(COLOR_OFF, true);
-        currentState = STATE_SET_TIME; // กด B (back) กลับไปหน้าตั้งเวลา
+        currentState = STATE_SET_TIME; // กด B|back กลับไปหน้าตั้งเวลา
         inputBuffer = "";
         redrawCurrentStateLCD();
       }
     }
   }
 
-  // 2. การอัปเดตหน้าจอ LCD และไฟ RGB ตามปกติ
+  // 2. การอัปเดตหน้าจอ LCD และไฟ RGB
   // ----------------------------------------------------
   if (millis() - lastLcdUpdate >= 200) {
     lastLcdUpdate = millis();
@@ -584,11 +581,11 @@ void loop() {
         if (!lastTimeExpired) {
           lastTimeExpired = true;
           lcd.clear();
-          lcd.setCursor(0, 0); lcd.print("  Move Around   "); // บรรทัดบน
-          lcd.setCursor(0, 1); lcd.print("A|again   B|back"); // บรรทัดล่าง
+          lcd.setCursor(0, 0); lcd.print("  Move  Around  ");
+          lcd.setCursor(0, 1); lcd.print("A|again   B|back");
         }
 
-        // กะพริบไฟสีแดงเตือนให้ลุกเปลี่ยนอิริยาบถ
+        // กะพริบไฟสีแดงเตือนให้ลุกบ้าง
         if ((millis() / 1000) % 2 == 0) {
           setRGBColorMode(COLOR_RED);
         } else {
