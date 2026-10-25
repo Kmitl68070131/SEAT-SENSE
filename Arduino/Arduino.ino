@@ -5,8 +5,8 @@
 
 // 1. ตั้งค่าการเชื่อมต่อและการกำหนดค่าระบบ (USER CONFIGURATION)
 // ==========================================
-const char* SECRET_SSID         = "wachi_";             // wifi name
-const char* SECRET_PASS         = "12345678";           // wifi Password
+const char* SECRET_SSID         = "J Park 3809";             // wifi name
+const char* SECRET_PASS         = "38094573";           // wifi Password
 const char* MQTT_BROKER         = "broker.hivemq.com";
 const int   MQTT_PORT           = 1883;
 const char* TABLE_BOARD_ID      = "A0";                 // ชื่อโต๊ะ 
