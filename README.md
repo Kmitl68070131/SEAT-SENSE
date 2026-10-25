@@ -54,3 +54,5 @@ Physical Computing Project 2026 - IT KMITL
 * **Firmware:** Arduino IDE (C++), `WiFi.h`, `Keypad.h`, `LiquidCrystal_I2C.h`
 * **Frontend:** HTML5, CSS3, JavaScript (Real-time Seat Map UI)
 * **Backend & Database:** Node.js / Express, Firebase / MySQL
+
+Website : https://kmitl68070131.github.io/SEAT-SENSE/project/

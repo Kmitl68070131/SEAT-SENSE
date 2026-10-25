@@ -9,16 +9,46 @@ window.PROJECT_CONTENT = {
     poster: "" // เช่น "assets/poster.pdf" หรือ URL ไฟล์ PDF
   },
   images: {
-    hero: "", // รูปชิ้นงานหลัก
-    hardware1: "", hardware2: "", hardware3: "", hardware4: "",
+    hero: "pic/mainjra (2).png", // รูปชิ้นงานหลัก
+    hardware1: "pic/gear1.jpg", hardware2: "pic/gear2.jpg", hardware3: "pic/gear3.jpg", hardware4: "pic/gear4.jpg",
+    hardware5: "pic/keypad.jpg", // รูป Keypad 4×4 เช่น "pic/gear5.jpg"
+    hardware6: "pic/led.jpg", // รูป RGB LED เช่น "pic/gear6.jpg"
+    hardware7: "pic/tmp36.jpg", // รูป TMP36 Temperature Sensor เช่น "pic/gear7.jpg"
+    connection: "pic/process-connection.png", // รูป PROCESS & CONNECTION ที่แนบมา (เปลี่ยนไฟล์รูปได้ที่นี่)
     diagram: "", // แผนภาพระบบ
-    prototype: "", // รูปชิ้นงานจริง
-    website: "" // รูปหน้าจอ SmartDesk
+    workflow1: "pic/1.please booking.jpg", // รูปขั้นตอน 01 เลือกโต๊ะว่าง เช่น "pic/step1.jpg"
+    workflow2: "pic/3 enterpass.jpg", // รูปขั้นตอน 02 รับรหัส PIN เช่น "pic/step2.jpg"
+    workflow3: "pic/4 welcome.jpg", // รูปขั้นตอน 03 เริ่มทำงาน เช่น "pic/step3.jpg"
+    prototype: "pic/resu1.jpg", // รูปชิ้นงานจริง
+    website: "pic/resu2.jpg", // รูปหน้าจอ SmartDesk
+    timer: "pic/9 green countdown.jpg", // รูปฟีเจอร์การตั้งเวลา เช่น "pic/set-time.jpg"
+    moveAround: "pic/11 move around.jpg", // รูปไฟสีแดงแจ้งเตือน Move Around เช่น "pic/move-around.jpg"
+    temperature: "pic/7. A_roomtemp (1).jpg" // รูป LCD แสดงอุณหภูมิ เช่น "pic/temp-result.jpg"
   },
   members: [
-    { name: "[ชื่อ–นามสกุล สมาชิก 1]", id: "[รหัสนักศึกษา]", role: "[หน้าที่รับผิดชอบ]", image: "" },
-    { name: "[ชื่อ–นามสกุล สมาชิก 2]", id: "[รหัสนักศึกษา]", role: "[หน้าที่รับผิดชอบ]", image: "" },
-    { name: "[ชื่อ–นามสกุล สมาชิก 3]", id: "[รหัสนักศึกษา]", role: "[หน้าที่รับผิดชอบ]", image: "" },
-    { name: "[ชื่อ–นามสกุล สมาชิก 4]", id: "[รหัสนักศึกษา]", role: "[หน้าที่รับผิดชอบ]", image: "" }
+  {
+    name: "นายพีระพัฒน์ เสียนาสระ",
+    id: "68070128",
+    role: "Backend & Cloud API Developer",
+    image: "pic/member1.jpg"
+  },
+  {
+    name: "นายภควรรษ หันหลวงราช",
+    id: "68070131",
+    role: "Embedded Firmware & Hardware Engineer",
+    image: "pic/1753347529672.jpg"
+  },
+  {
+    name: "นายภูสิทธิ์ รุ่งเรือง",
+    id: "68070148",
+    role: "Frontend Web Developer",
+    image: "pic/member3.jpg"
+  },
+  {
+    name: "นายวชิรวิทย์ อนุสุนชนัง",
+    id: "68070164",
+    role: "Hardware Assembly & Integration",
+    image: "pic/member4.jpg"
+  }
   ]
 };

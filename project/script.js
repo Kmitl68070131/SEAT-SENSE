@@ -26,19 +26,28 @@
     const status = link.querySelector('.resource-status');
     if (status) status.textContent = ({video: 'ดูคลิปพรีเซนต์ ↗', poster: 'เปิดโปสเตอร์ PDF ↗', website: 'เปิดเว็บไซต์ ↗', github: 'เปิด GitHub ↗'})[link.dataset.link];
   });
+  
   function attachImage(slot, path, alt) {
     const url = safeURL(path);
     if (!url) return;
+
     const img = new Image();
     img.alt = alt;
-    img.loading = slot.dataset.image === 'hero' ? 'eager' : 'lazy';
-    // คงช่องรูปเดิมไว้ถ้าพาธผิดหรือโหลดรูปไม่ได้
-    img.addEventListener('load', () => {
+    img.loading = "eager";
+
+    img.onload = () => {
       slot.replaceChildren(img);
-      slot.classList.add('has-image');
-    }, {once: true});
+      slot.classList.add("has-image");
+      console.log("โหลดรูปสำเร็จ:", url);
+    };
+
+    img.onerror = () => {
+      console.error("โหลดรูปไม่สำเร็จ:", url);
+    };
+
     img.src = url;
   }
+
   document.querySelectorAll('[data-image]').forEach(slot => {
     attachImage(slot, content.images?.[slot.dataset.image], slot.innerText.trim() || 'รูปประกอบโครงงาน SEAT-SENSE');
   });

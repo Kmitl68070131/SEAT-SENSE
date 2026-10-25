@@ -22,3 +22,210 @@
 :root{--ink:#184b3d;--green:#28775c;--muted:#506e61;--line:#d4e4d9;--accent:#b9dfc2;--soft:#eaf3ed;--paper:#fafaf6}
 .header{background:rgba(250,250,246,.97);border-color:#d8e7dc}.home-link{font-family:'Noto Sans Thai',sans-serif;font-size:15px;font-weight:500;letter-spacing:0}.header-cta{border-radius:12px;background:#23634d;color:#fff;border-color:#23634d}.header-cta:hover{background:#194d3c;color:#fff}.showcase-label{justify-content:center;border:0;padding-bottom:0;color:#62836f;font-size:11px;letter-spacing:1.8px}.hero{padding-top:42px}.hero h1{font-size:clamp(56px,8.2vw,108px);margin:22px 0 20px;letter-spacing:-5px;color:#184f3f}.title-dash{color:#8dbaa0}.hero-intro{display:flex;flex-direction:column;text-align:center;gap:20px;padding-bottom:32px}.hero-description{font-size:21px}.hero-description span{font-size:16px}.explore-project{gap:13px}.explore-project span{border-color:#b2cfbb;background:#e7f2e9;width:37px;height:37px}.hero-art{border-radius:26px;background-color:#e3efe5;background-image:radial-gradient(ellipse at 50% 30%,#f5faf2 0%,transparent 68%),linear-gradient(#47856608 1px,transparent 1px),linear-gradient(90deg,#47856608 1px,transparent 1px);background-size:auto,36px 36px,36px 36px;border:1px solid #cfe2d3;overflow:hidden;box-shadow:0 12px 35px #285c3810}.project-photo{height:370px;padding:10px 0}.desk-art{height:330px}.illustration-label{color:#678772}.hardware-photo,.result-photo,.member-photo{border-radius:18px;background:#eaf3eb;border-color:#bfd6c5}.diagram-slot{border-radius:20px;background:#edf5ef;border-color:#bfd6c5}.outline-label{border-radius:30px;background:#edf5ef;border-color:#c6dacb}.resources-section{background:#e8f2ea;border-radius:32px;max-width:1240px;margin:auto}.resource-grid,.resource{border-color:#c0d6c7}.resource[href]:hover{border-color:#c0d6c7;background:#dbece0;border-radius:14px}.resource-icon,.featured .resource-icon{background:#f5faf5;border-color:#c5dacb;color:#347a59}.section-heading{border-color:#bcd2c2}.flow-grid,.flow-grid article,.hardware-card{border-color:#c4d8c9}.flow-top .number{color:#7fa58c}.photo-symbol{border-color:#c2d6c7;color:#719780}.footer-brand{color:#184f3f}
 @media(max-width:760px){.header-inner{min-height:72px}.home-link{font-size:14px}.header nav a{background:#e7f2e9;border-radius:9px}.header-cta{font-size:11px;padding:10px 13px}.showcase-label{font-size:9px;letter-spacing:1px;display:block;text-align:center}.hero{padding-top:32px}.hero h1{font-size:10.6vw;letter-spacing:-2px;margin:23px 0 20px}.hero-description{font-size:17px}.hero-description span{font-size:13px}.hero-intro{gap:18px;padding-bottom:26px}.hero-art{border-radius:20px}.project-photo{height:270px}.desk-art{height:225px}.resources-section{border-radius:24px}.explore-project{font-size:12px}.illustration-label{font-size:9px}}
+
+
+
+/* แสดงวัตถุประสงค์เต็มความกว้าง */
+.about-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.objectives {
+  width: 100%;
+  border-left: none;
+  padding-left: 0;
+}
+
+
+/* SEAT SENSE: 6 hardware items and 3-step usage card */
+.hardware-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 20px; }
+.usage-guide { padding: 26px 30px 30px; border: 1px solid var(--line); border-radius: 18px; background: #fff; }
+.usage-title { margin: 0 0 22px; font-size: 21px; font-weight: 600; }
+.usage-guide .flow-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; border: 0; }
+.usage-guide .flow-grid article { display: block; padding: 0; border: 0; min-width: 0; }
+.usage-guide .flow-top { padding: 0; }
+.usage-guide .flow-top .number { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; border: 1px solid #c4d8ba; background: #eef5e5; color: #3b6a40; font-size: 13px; font-weight: 600; }
+.usage-guide .flow-grid h3 { font-size: 18px; font-weight: 600; margin: 14px 0 6px; }
+.usage-guide .flow-grid p { font-size: 14px; line-height: 1.8; margin: 0; max-width: none; }
+@media (max-width: 760px) {
+  .hardware-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 26px 16px; }
+  .usage-guide { padding: 22px 20px; }
+  .usage-guide .flow-grid { grid-template-columns: 1fr; gap: 20px; }
+  .usage-guide .flow-grid article { padding: 0 0 16px; border-bottom: 1px solid var(--line); }
+  .usage-guide .flow-grid article:last-child { border-bottom: 0; padding-bottom: 0; }
+}
+@media (max-width: 480px) { .hardware-grid { grid-template-columns: 1fr; } }
+
+
+/* 04 / System Calculations — responsive formula cards */
+.calculations-section .section-heading { margin-bottom: 34px; }
+.formula-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; align-items: stretch; }
+.formula-card { min-width: 0; border: 1px solid #d2e4d7; border-radius: 20px; padding: 25px 22px 22px; background: #fffefa; display: flex; flex-direction: column; gap: 14px; }
+.formula-card-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 9px; }
+.formula-card-head .small-label { font-size: 10px; letter-spacing: 1.15px; }
+.formula-chip { border: 1px solid #c2dac8; background: #edf5ee; border-radius: 999px; color: #356d51; font: 600 11px/1.4 Manrope,'Noto Sans Thai',sans-serif; padding: 5px 12px; }
+.formula-card h3 { font-size: 20px; font-weight: 600; line-height: 1.45; }
+.formula-intro, .formula-terms { font-size: 13px; line-height: 1.85; color: var(--muted); }
+.equation-panel { padding: 19px 15px; border-radius: 13px; background: linear-gradient(150deg,#e8f3ea,#f1f7ef); border: 1px solid #d2e4d7; }
+.equation-caption { display: block; color: #597665; font-size: 11px; line-height: 1.4; margin-bottom: 8px; }
+.equation-caption-gap { margin-top: 20px; }
+.equation { color: var(--ink); font: 600 clamp(14px,1.35vw,18px)/1.55 Manrope,'Noto Sans Thai',sans-serif; overflow-wrap: anywhere; font-variant-numeric: lining-nums tabular-nums; }
+.equation-small { font-size: 13px; }
+.formula-terms { margin: 0; padding-left: 18px; }
+.formula-terms li { margin-bottom: 5px; }
+.formula-terms strong { color: var(--ink); }
+@media (max-width: 1050px) { .formula-grid { grid-template-columns: 1fr 1fr; } .equation { font-size: 17px; } }
+@media (max-width: 760px) { .formula-grid { grid-template-columns: 1fr; gap: 17px; } .formula-card { padding: 22px 19px; } .equation { font-size: 16px; } .formula-card h3 { font-size: 19px; } }
+
+/* 03 / HOW IT WORKS — photo slot for each of the three steps */
+.usage-guide .step-photo {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  margin: 16px 0 18px;
+  border: 1px dashed #bcd6c4;
+  border-radius: 14px;
+  background: #edf5ee;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+  padding: 16px;
+  color: #597660;
+  font-size: 13px;
+  line-height: 1.55;
+  overflow: hidden;
+}
+.usage-guide .step-photo.has-image { padding: 0; border-style: solid; }
+.usage-guide .step-photo.has-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* keep screenshots and keypad photos fully visible */
+  background: #fff;
+}
+.usage-guide .flow-grid h3 { margin-top: 0; }
+
+/* 05 / THE RESULT — four equally-sized result and feature cards */
+.results .result-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 30px 28px;
+}
+.results .result-grid figure { min-width: 0; }
+.results .result-grid figure:nth-child(2) { padding-top: 0; }
+.results .result-grid .result-photo,
+.results .result-grid figure:nth-child(2) .result-photo {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+}
+.results .result-grid figcaption { padding: 15px 2px 0; }
+.results .result-grid figcaption span { line-height: 1.75; }
+.results .result-grid .result-photo.has-image img { object-fit: contain; background: #fff; }
+@media (max-width: 760px) {
+  .usage-guide .step-photo { aspect-ratio: 16 / 10; }
+  .results .result-grid { grid-template-columns: 1fr; gap: 26px; }
+}
+
+
+/* SEAT SENSE — Software & Connection (เพิ่มช่องรูปที่เปลี่ยนผ่าน content.js ได้) */
+.tech-line {
+  display: block;
+  border-top: 1px solid var(--line);
+  padding-top: 26px;
+  margin-top: 38px;
+}
+.tech-line > .small-label { margin-bottom: 18px; }
+.tech-content {
+  display: grid;
+  grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+  align-items: start;
+  gap: 28px;
+}
+.tech-copy h3 { font-size: 20px; font-weight: 600; margin: 0 0 12px; }
+.tech-copy p { font-size: 14px; line-height: 1.9; color: var(--muted); margin: 0 0 14px; }
+.tech-copy .tech-stack { font-size: 12px; font-weight: 600; color: var(--green); }
+.connection-photo {
+  background: #eef5ef;
+  border: 1px solid #c8ddcf;
+  border-radius: 18px;
+  overflow: hidden;
+  min-height: 255px;
+  padding: 23px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.connection-visual {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 75px minmax(0, 1fr) 58px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+.connection-node {
+  min-height: 143px;
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #c8ddcf;
+  border-radius: 15px;
+  padding: 14px 9px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 5px;
+}
+.connection-node-center { background: #e1efe5; }
+.connection-node strong { font: 700 12px/1.4 Manrope,'Noto Sans Thai',sans-serif; color: #1b5140; }
+.connection-node small { color: var(--muted); font-size: 10px; line-height: 1.5; }
+.connection-icon { color: #32775c; font: 600 31px/1 Manrope,sans-serif; margin-bottom: 7px; }
+.connection-link { color: #417a60; text-align: center; min-width: 0; }
+.connection-link span:first-child { display: block; font: 600 9px/1.6 Manrope,sans-serif; }
+.connection-arrow { display: block; font-size: 26px; line-height: 1.2; }
+.connection-caption { display: block; font-size: 10px; line-height: 1.65; color: #728277; margin-top: 14px; text-align: center; }
+.connection-photo.has-image { padding: 0; min-height: 0; aspect-ratio: 16/9; }
+.connection-photo.has-image img { display: block; width: 100%; height: 100%; object-fit: contain; background: white; }
+.results .result-grid .result-photo.has-image img { object-fit: contain; background: white; }
+@media(max-width: 1080px) {
+  .tech-content { grid-template-columns: 1fr; }
+  .connection-photo { min-height: 225px; }
+}
+@media(max-width: 680px) {
+  .connection-photo { padding: 18px 12px; min-height: 0; }
+  .connection-visual { grid-template-columns: 1fr; gap: 5px; }
+  .connection-node { min-height: 78px; }
+  .connection-icon { margin: 0; font-size: 23px; }
+  .connection-link { display: flex; flex-direction: column; align-items: center; }
+  .connection-arrow { transform: rotate(90deg); font-size: 22px; }
+}
+
+/* PROCESS & CONNECTION — ใช้ภาพที่ผู้จัดทำแนบมา อัตราส่วนเดิม ไม่ตัดภาพ */
+.tech-content {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+.connection-photo.has-image {
+  width: 100%;
+  max-width: 1000px;
+  min-height: 0;
+  aspect-ratio: auto;
+  margin-inline: auto;
+  padding: 0;
+  border: 1px solid #c8ddcf;
+  border-radius: 16px;
+  background: #b6d8b8;
+}
+.connection-photo.has-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  background: #b6d8b8;
+}
