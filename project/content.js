@@ -36,7 +36,7 @@ window.PROJECT_CONTENT = {
     name: "นายภควรรษ หันหลวงราช",
     id: "68070131",
     role: "Embedded Firmware & Hardware Engineer",
-    image: "pic/luffy icon __one piece.jpg"
+    image: "pic/1753347529672.jpg"
   },
   {
     name: "นายภูสิทธิ์ รุ่งเรือง",
