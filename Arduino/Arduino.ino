@@ -661,7 +661,7 @@ void loop() {
     else {
       char serialBuf[120];
       snprintf(serialBuf, sizeof(serialBuf), 
-               "U1 : %-8s                       U2 : %-8s", 
+               "U1 : %-8s               U2 : %-8s", 
                u1Str, u2Str);
       Serial.println(serialBuf);
     }
