@@ -132,7 +132,6 @@
 }
 
 
-/* SEAT SENSE — Software & Connection (เพิ่มช่องรูปที่เปลี่ยนผ่าน content.js ได้) */
 .tech-line {
   display: block;
   border-top: 1px solid var(--line);
@@ -206,7 +205,7 @@
   .connection-arrow { transform: rotate(90deg); font-size: 22px; }
 }
 
-/* PROCESS & CONNECTION — ใช้ภาพที่ผู้จัดทำแนบมา อัตราส่วนเดิม ไม่ตัดภาพ */
+
 .tech-content {
   grid-template-columns: minmax(0, 1fr);
   gap: 18px;
@@ -238,3 +237,10 @@
 /* Keep the complete website screenshot visible at its natural ratio. */
 .results .result-grid figure:nth-child(2) .result-photo { display:block; aspect-ratio:auto; height:auto; background:#fff; }
 .results .result-grid figure:nth-child(2) .result-photo.has-image img { display:block; width:100%; height:auto; max-height:none; object-fit:contain; }
+
+#about .objectives > .small-label {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--ink);
+}
