@@ -238,9 +238,35 @@
 .results .result-grid figure:nth-child(2) .result-photo { display:block; aspect-ratio:auto; height:auto; background:#fff; }
 .results .result-grid figure:nth-child(2) .result-photo.has-image img { display:block; width:100%; height:auto; max-height:none; object-fit:contain; }
 
-#about .objectives > .small-label {
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: 0;
-  color: var(--ink);
-}
+/* จุดแก้รอบ 2 */
+#about .about-title { font-size:26px; font-weight:700; color:var(--ink); margin:0 0 4px; line-height:1.45; }
+#about .about-subtitle { font:600 12px/1.7 Manrope,'Noto Sans Thai',sans-serif; color:#506848; letter-spacing:1.6px; margin-bottom:18px; }
+#about .objectives { padding-top:0; }
+.abstract p { text-indent:2em; }
+.abstract p + p { margin-top:14px; }
+.pc-diagram__icon { object-fit:contain; }
+.pc-monitor { width:170px; max-width:100%; height:122px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.pc-monitor__screen { width:100%; border:6px solid #183e32; border-bottom-width:10px; border-radius:7px; overflow:hidden; background:white; }
+.pc-monitor__screen img { display:block; width:100%; height:auto; }
+.pc-monitor__stand { width:56%; height:12px; border-bottom:5px solid #183e32; position:relative; }
+.pc-monitor__stand::before { content:""; position:absolute; left:42%; top:0; width:16%; height:9px; background:#183e32; }
+#reminder .device-closeup, .results .result-grid .device-closeup { position:relative; width:100%; max-width:300px; height:auto; aspect-ratio:2 / 3; margin-left:auto; margin-right:auto; padding:0; overflow:hidden; }
+#reminder .device-closeup img, .results .result-grid .device-closeup.has-image img { position:absolute; max-width:none; max-height:none; object-fit:fill; background:transparent; }
+/* กำหนดกรอบให้เห็นหน้าจอ ปุ่ม และขอบเครื่องครบ */
+#reminder .crop-settime img, .results .result-grid .crop-settime.has-image img { width:156.25%; height:135.14%; left:-31.25%; top:-17.57%; }
+#reminder .crop-red img { width:138.89%; height:119.05%; left:-16.67%; top:-13.1%; }
+#reminder .crop-expired img, .results .result-grid .crop-expired.has-image img { width:147.06%; height:123.46%; left:-19.12%; top:-13.58%; }
+.results .result-grid .crop-temperature.has-image img { width:149.25%; height:128.21%; left:-22.39%; top:-17.95%; }
+.member-photo.has-image img { object-fit:cover; object-position:center top; }
+#reminder .crop-settime, .results .result-grid .crop-settime { aspect-ratio:48 / 74; }
+#reminder .crop-red { aspect-ratio:57 / 87; }
+#reminder .crop-red img { width:131.58%; height:114.94%; left:-13.16%; top:-11.49%; }
+#reminder .crop-expired, .results .result-grid .crop-expired { aspect-ratio:51 / 81; }
+.results .result-grid .crop-temperature { aspect-ratio:50.25 / 78; }
+#team-list article:nth-child(1) .member-photo img { object-position:center 40%; }
+#team-list article:nth-child(2) .member-photo img { object-position:center 75%; }
+#team-list article:nth-child(3) .member-photo img { object-position:center 30%; }
+#team-list article:nth-child(4) .member-photo img { object-position:center 20%; }
+
+/* ผสานพื้นขาวของรูปเข้ากับพื้นแผนภาพ */
+.pc-diagram__device > img.pc-diagram__icon { mix-blend-mode:multiply; }

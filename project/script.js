@@ -20,11 +20,16 @@
     link.href = url;
     link.removeAttribute('aria-disabled');
     link.classList.remove('pending');
-    // เปิดระบบและสื่อต่าง ๆ ในแท็บใหม่ เพื่อกลับมาอ่านรายละเอียดต่อได้
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
+    // ปุ่มมุมขวาเปิดระบบในแท็บปัจจุบัน
+    if (link.classList.contains('header-cta')) {
+      link.removeAttribute('target');
+      link.removeAttribute('rel');
+    } else {
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+    }
     const status = link.querySelector('.resource-status');
-    if (status) status.textContent = ({video: 'ดูคลิปพรีเซนต์ ↗', poster: 'เปิดโปสเตอร์ PDF ↗', website: 'เปิดเว็บไซต์ ↗', github: 'เปิด GitHub ↗'})[link.dataset.link];
+    if (status) status.textContent = ({video: 'ดูวิดีโอนำเสนอ ↗', poster: 'เปิดโปสเตอร์ PDF ↗', website: 'เปิดเว็บไซต์ ↗', github: 'เปิด GitHub ↗'})[link.dataset.link];
   });
   
   function attachImage(slot, path, alt) {
