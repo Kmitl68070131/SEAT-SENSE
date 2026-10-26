@@ -3,9 +3,9 @@
    ช่องที่ยังไม่มีข้อมูลให้เว้นเป็น "" */
 window.PROJECT_CONTENT = {
   links: {
-    website: "../index.html", // หน้า SmartDesk เดิมใน repo
+    website: "../index.html", // หน้า SEAT-SENSE Website เดิมใน repo
     github: "https://github.com/Kmitl68070131/SEAT-SENSE",
-    video: "", // วาง URL คลิปพรีเซนต์
+    video: "", // วาง URL วิดีโอนำเสนอ
     poster: "" // เช่น "assets/poster.pdf" หรือ URL ไฟล์ PDF
   },
   images: {
@@ -15,8 +15,8 @@ window.PROJECT_CONTENT = {
     hardware6: "pic/led.jpg", // รูป RGB LED เช่น "pic/gear6.jpg"
     hardware7: "pic/tmp36.jpg", // รูป TMP36 Temperature Sensor เช่น "pic/gear7.jpg"
     prototype: "pic/prototype-new.png", // รูปชิ้นงานจริง
-    website: "pic/website-full.png", // รูปหน้าจอ SmartDesk
-    timer: "pic/timer-green.jpg", // รูปฟีเจอร์การตั้งเวลา เช่น "pic/set-time.jpg"
+    website: "pic/website-full.png", // รูปหน้าจอ SEAT-SENSE Website
+    timer: "pic/timer-settime.jpg", // รูปฟีเจอร์การตั้งเวลา เช่น "pic/set-time.jpg"
     moveAround: "pic/timer-expired.jpg", // รูปไฟสีแดงแจ้งเตือน Move Around เช่น "pic/move-around.jpg"
     temperature: "pic/7. A_roomtemp (1).jpg" // รูป LCD แสดงอุณหภูมิ เช่น "pic/temp-result.jpg"
   },
@@ -24,7 +24,7 @@ window.PROJECT_CONTENT = {
   {
     name: "นายพีระพัฒน์ เสียนาสระ",
     id: "68070128",
-    role: "Backend & Cloud API Developer",
+    role: "Project Website & Poster Design",
     image: "pic/member1.jpg"
   },
   {
@@ -36,13 +36,13 @@ window.PROJECT_CONTENT = {
   {
     name: "นายภูสิทธิ์ รุ่งเรือง",
     id: "68070148",
-    role: "Frontend Web Developer",
+    role: "Project Website & Poster Design",
     image: "pic/member3.jpg"
   },
   {
     name: "นายวชิรวิทย์ อนุสุนชนัง",
     id: "68070164",
-    role: "Hardware Assembly & Integration",
+    role: "Embedded Firmware & Hardware Engineer",
     image: "pic/member4.jpg"
   }
   ]
