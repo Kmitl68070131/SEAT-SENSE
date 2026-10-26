@@ -51,12 +51,12 @@
 <a class="skip" href="#main">ข้ามไปเนื้อหา</a>
 <header class="header">
   <div class="shell header-inner">
-    <a class="brand home-link" href="#home">หน้าแรก</a>
+    <a class="brand seat-logo" href="#home" aria-label="SEAT-SENSE หน้าแรก">SEAT<span>-</span>SENSE</a>
     <button class="menu-toggle" aria-expanded="false" aria-controls="navigation" type="button">เมนู <span aria-hidden="true">☰</span></button>
     <nav id="navigation" aria-label="เมนูหลัก">
       <a href="#about">เกี่ยวกับโปรเจกต์</a><a href="#hardware">อุปกรณ์</a><a href="#workflow">การทำงาน</a><a href="#calculations">สูตรคำนวณ</a><a href="#team">สมาชิก</a>
     </nav>
-    <a class="button header-cta" data-link="website" href="../index.html">ไปยังเว็บระบบ <span aria-hidden="true">↗</span></a>
+    <a class="button header-cta" data-link="website" href="../index.html">ไปยังเว็บไซต์ระบบ <span aria-hidden="true">↗</span></a>
   </div>
 </header>
 <main id="main">
@@ -64,7 +64,7 @@
   <div class="hero-copy">
     <div class="eyebrow showcase-label">PHYSICAL COMPUTING · IT KMITL · 2026</div>
     <h1>SEAT<span class="title-dash">-</span>SENSE</h1>
-    <div class="hero-intro"><p class="hero-description">ระบบจัดการที่นั่งห้องสมุดอัจฉริยะ<br><span>เชื่อมพื้นที่จริงเข้ากับการใช้งานผ่านเว็บ</span></p><a class="explore-project" href="#about">สำรวจโปรเจกต์ <span aria-hidden="true">↓</span></a></div>
+    <div class="hero-intro"><p class="hero-description">ระบบจัดการที่นั่งห้องสมุดอัจฉริยะ<br><span>จองโต๊ะผ่านเว็บไซต์ และยืนยัน PIN ที่อุปกรณ์</span></p><a class="explore-project" href="#about">สำรวจโปรเจกต์ <span aria-hidden="true">↓</span></a></div>
   </div>
   <div class="hero-art">
     <div class="project-photo media-slot" data-image="hero">
@@ -96,26 +96,25 @@
         <circle cx="378" cy="110" r="6" fill="#9fc95b"/>
         <text x="394" y="115" font-size="15" fill="#35523a" font-family="Manrope,sans-serif">SmartDesk</text>
       </svg>
-      <span class="illustration-label">ภาพประกอบแนวคิด · เปลี่ยนเป็นรูปชิ้นงานได้</span>
+      <span class="illustration-label">ภาพประกอบแนวคิดของโปรเจกต์</span>
     </div>
   </div>
 </section>
 <section class="shell section" id="about">
   <div class="section-heading"><span class="eyebrow">01 / ABOUT THE PROJECT</span><h2>เกี่ยวกับโปรเจกต์</h2></div>
-  <div class="about-layout">
-  <div class="objectives"><span class="small-label">วัตถุประสงค์ของโปรเจกต์</span><article><span class="number">01</span><div><h3>อำนวยความสะดวกในการค้นหาที่นั่ง</h3><p>ลดเวลาเดินวนหาโต๊ะอ่านหนังสือของนักศึกษาและผู้ใช้บริการห้องสมุด โดยเฉพาะช่วงใกล้สอบ</p></div></article><article><span class="number">02</span><div><h3>ขจัดปัญหาการกั๊กโต๊ะ</h3><p>แก้ปัญหาการนำสิ่งของมาวางจองที่นั่งไว้แต่ตัวไม่อยู่ ทำให้ผู้อื่นเสียโอกาส</p></div></article><article><span class="number">03</span><div><h3>ส่งเสริมสุขภาพผู้ใช้งาน</h3><p>มีระบบแจ้งเตือน Active Reminder ให้ผู้ใช้เปลี่ยนอิริยาบถเพื่อป้องกันโรคออฟฟิศซินโดรม</p></div></article><article><span class="number">04</span><div><h3>สรุปและวิเคราะห์ข้อมูล</h3><p>จัดเก็บและทำรายงานสถิติการใช้งานที่นั่งเพื่อช่วยบริหารจัดการพื้นที่ห้องสมุด
+  <div class="about-layout"><article class="abstract"><span class="small-label">ABSTRACT</span><h3>บทคัดย่อ</h3><p>SEAT-SENSE เป็นระบบต้นแบบจัดการที่นั่งห้องสมุดที่เชื่อมต่อเว็บไซต์กับอุปกรณ์ประจำโต๊ะผ่าน MQTT ผู้ใช้ตรวจสอบโต๊ะว่างและจองผ่านเว็บไซต์ จากนั้นนำรหัส PIN ที่บอร์ดสร้างและส่งมาแสดงบนเว็บไซต์ไปกรอกที่ Keypad เพื่อยืนยันการเข้าใช้งาน บอร์ด Arduino UNO R4 WiFi รับข้อมูลจากเซนเซอร์ Ultrasonic เพื่อตรวจจับผู้ใช้งานและคืนโต๊ะอัตโนมัติเมื่อไม่พบผู้ใช้งานตามเงื่อนไขที่กำหนด พร้อมส่งสถานะกลับไปยังเว็บไซต์ นอกจากนี้ ผู้ใช้สามารถตั้งเวลาเตือนเปลี่ยนอิริยาบถผ่านหน้าจอ LCD และไฟ RGB รวมถึงตรวจสอบอุณหภูมิจากเซนเซอร์ TMP36 ระบบนี้มุ่งช่วยให้การจองและใช้ที่นั่งสะดวกขึ้น ลดการจองโต๊ะทิ้งไว้ และส่งเสริมการพักระหว่างนั่งทำงาน</p></article>
+  <div class="objectives"><span class="small-label">วัตถุประสงค์ของโปรเจกต์</span><article><span class="number">01</span><div><h3>อำนวยความสะดวกในการค้นหาที่นั่ง</h3><p>ลดเวลาเดินวนหาโต๊ะอ่านหนังสือของนักศึกษาและผู้ใช้บริการห้องสมุด โดยเฉพาะช่วงใกล้สอบ</p></div></article><article><span class="number">02</span><div><h3>ลดการจองโต๊ะทิ้งไว้</h3><p>ตรวจจับผู้ใช้งานที่โต๊ะ และคืนโต๊ะอัตโนมัติเมื่อไม่พบผู้ใช้งานตามเวลาที่กำหนด</p></div></article><article><span class="number">03</span><div><h3>เตือนให้พักจากการนั่งทำงาน</h3><p>ตั้งเวลาให้ LCD และไฟ RGB เตือนผู้ใช้ให้ลุกเปลี่ยนอิริยาบถ</p></div></article><article><span class="number">04</span><div><h3>แสดงสถานะโต๊ะบนเว็บไซต์</h3><p>แสดงจำนวนโต๊ะว่าง โต๊ะที่จองแล้ว และโต๊ะที่กำลังใช้งาน เพื่อให้ผู้ใช้เลือกโต๊ะได้
 </p></div></article></div></div>
 </section>
 <section class="hardware-section" id="hardware"><div class="shell section">
-  <div class="section-heading heading-row"><div><span class="eyebrow">02 / HARDWARE &amp; TECHNOLOGY</span><h2>เทคโนโลยีเบื้องหลัง SEAT SENSE</h2><p>อุปกรณ์และเทคโนโลยีที่ประกอบกันเป็นชิ้นงาน</p></div><span class="outline-label">HARDWARE × SOFTWARE</span></div>
+  <div class="section-heading heading-row"><div><span class="eyebrow">02 / HARDWARE &amp; TECHNOLOGY</span><h2>อุปกรณ์ที่ใช้</h2><p>อุปกรณ์หลักและหน้าที่ของแต่ละชิ้น</p></div><span class="outline-label">HARDWARE × SOFTWARE</span></div>
   <div class="hardware-grid">
-    <article class="hardware-card"><div class="hardware-photo media-slot" data-image="hardware1"><span class="photo-symbol" aria-hidden="true">＋</span><span>รูปแผงทดลองวงจร</span></div><span class="small-label">01 / COMPONENT</span><h3>Breadboard</h3><p>แผงทดลองวงจรสำหรับเชื่อมต่อบอร์ด เซนเซอร์ และอุปกรณ์อิเล็กทรอนิกส์โดยไม่ต้องบัดกรี</p></article>
-    <article class="hardware-card"><div class="hardware-photo media-slot" data-image="hardware2"><span class="photo-symbol" aria-hidden="true">＋</span><span>รูปบอร์ดควบคุม</span></div><span class="small-label">02 / CONTROLLER</span><h3>Arduino UNO R4 WiFi</h3><p>ไมโครคอนโทรลเลอร์สำหรับรับข้อมูลจากเซนเซอร์ ตรวจสอบรหัส PIN และเชื่อมต่อสถานะโต๊ะกับระบบผ่าน Wi-Fi</p></article>
-    <article class="hardware-card"><div class="hardware-photo media-slot" data-image="hardware3"><span class="photo-symbol" aria-hidden="true">＋</span><span>รูปหน้าจอ LCD</span></div><span class="small-label">03 / OUTPUT</span><h3>LCD Display 16×2</h3><p>หน้าจอสำหรับแสดงสถานะของโต๊ะ ข้อความแนะนำการใช้งาน และข้อมูลที่ระบบแจ้งแก่ผู้ใช้</p></article>
-    <article class="hardware-card"><div class="hardware-photo media-slot" data-image="hardware4"><span class="photo-symbol" aria-hidden="true">＋</span><span>รูปเซนเซอร์วัดระยะ</span></div><span class="small-label">04 / SENSOR</span><h3>Ultrasonic Sensor HC-SR04</h3><p>เซนเซอร์ตรวจวัดระยะเพื่อตรวจสอบการมีผู้ใช้งานจริงที่โต๊ะ และช่วยให้ระบบจัดการสถานะที่นั่ง</p></article>
-    <article class="hardware-card"><div class="hardware-photo media-slot" data-image="hardware5"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มรูป Keypad 4×4</span></div><span class="small-label">05 / INPUT</span><h3>Keypad 4×4</h3><p>แป้นกดตัวเลขสำหรับกรอกรหัส PIN ที่ได้รับหลังจองโต๊ะ เพื่อยืนยันสิทธิ์ใช้งานที่โต๊ะจริง</p></article>
-    <article class="hardware-card"><div class="hardware-photo media-slot" data-image="hardware6"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มรูป RGB LED</span></div><span class="small-label">06 / INDICATOR</span><h3>RGB LED</h3><p>ไฟแสดงสถานะด้วยสีต่าง ๆ ช่วยให้ผู้ใช้งานทราบสถานะโต๊ะได้อย่างรวดเร็ว</p></article>
-    <article class="hardware-card"><div class="hardware-photo media-slot" data-image="hardware7"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มรูปเซนเซอร์ TMP36</span></div><span class="small-label">07 / SENSOR</span><h3>TMP36 Temperature Sensor</h3><p>เซนเซอร์วัดอุณหภูมิแบบแอนะล็อก เชื่อมต่อกับ Arduino ผ่านขา A0 เพื่ออ่านค่าอุณหภูมิและส่งข้อมูลให้ระบบ SmartDesk</p></article>
+    <article class="hardware-card"><div class="hardware-photo media-slot" data-image="hardware2"><span>รูปบอร์ดควบคุม</span></div><span class="small-label">01 / CONTROLLER</span><h3>Arduino UNO R4 WiFi</h3><p>ไมโครคอนโทรลเลอร์สำหรับรับข้อมูลจากเซนเซอร์ ตรวจสอบรหัส PIN และเชื่อมต่อสถานะโต๊ะกับระบบผ่าน Wi-Fi</p></article>
+    <article class="hardware-card"><div class="hardware-photo media-slot" data-image="hardware3"><span>รูปหน้าจอ LCD</span></div><span class="small-label">02 / OUTPUT</span><h3>LCD Display 16×2</h3><p>หน้าจอแสดงสถานะโต๊ะ คำแนะนำ เวลานับถอยหลัง และอุณหภูมิ</p></article>
+    <article class="hardware-card"><div class="hardware-photo media-slot" data-image="hardware4"><span>รูปเซนเซอร์วัดระยะ</span></div><span class="small-label">03 / SENSOR</span><h3>Ultrasonic Sensor HC-SR04</h3><p>เซนเซอร์ตรวจวัดระยะเพื่อตรวจสอบการมีผู้ใช้งานจริงที่โต๊ะ และคืนโต๊ะเมื่อไม่มีผู้ใช้งานตามเงื่อนไขที่ตั้งไว้</p></article>
+    <article class="hardware-card"><div class="hardware-photo media-slot" data-image="hardware5"><span> Keypad 4×4</span></div><span class="small-label">04 / INPUT</span><h3>Keypad 4×4</h3><p>แป้นกดตัวเลขสำหรับกรอกรหัส PIN ที่ได้รับหลังจองโต๊ะ เพื่อยืนยันการเข้าใช้งาน</p></article>
+    <article class="hardware-card"><div class="hardware-photo media-slot" data-image="hardware6"><span> RGB LED</span></div><span class="small-label">05 / INDICATOR</span><h3>RGB LED</h3><p>ไฟแสดงสถานะด้วยสีต่าง ๆ ช่วยให้ผู้ใช้งานทราบสถานะโต๊ะได้อย่างรวดเร็ว</p></article>
+    <article class="hardware-card"><div class="hardware-photo media-slot" data-image="hardware7"><span>เซนเซอร์ TMP36</span></div><span class="small-label">06 / SENSOR</span><h3>TMP36 Temperature Sensor</h3><p>เซนเซอร์วัดอุณหภูมิแบบแอนะล็อก เชื่อมต่อกับ Arduino ผ่านขา A0 เพื่ออ่านค่าอุณหภูมิและส่งข้อมูลให้ระบบ SmartDesk</p></article>
   </div>
   <div class="tech-line">
     <span class="small-label">SOFTWARE &amp; CONNECTION</span>
@@ -123,9 +122,7 @@
       <div class="tech-copy">
         <h3>การเชื่อมต่อฮาร์ดแวร์กับระบบ SmartDesk</h3>
         <p>
-          Arduino UNO R4 WiFi รับข้อมูลจาก Ultrasonic Sensor และ TMP36
-          แล้วส่งสถานะที่นั่งและค่าอุณหภูมิผ่าน Wi-Fi ด้วยโปรโตคอล MQTT
-          ไปยัง MQTT Broker เพื่อให้ระบบที่เชื่อมต่อรับข้อมูลไปใช้งานต่อได้
+          เว็บไซต์ส่งคำสั่งจองและคืนโต๊ะผ่าน MQTT Broker ไปยังบอร์ด ส่วนบอร์ดสร้างและตรวจสอบ PIN ควบคุมอุปกรณ์ แล้วส่งสถานะโต๊ะ รหัส PIN และอุณหภูมิกลับไปแสดงบนเว็บไซต์ โดย Broker ทำหน้าที่ส่งต่อข้อความระหว่างสองฝั่ง
         </p>
         <p class="tech-stack">Arduino C/C++ · WiFiS3 · PubSubClient (MQTT) · LCD I2C · SmartDesk</p>
       </div>
@@ -161,7 +158,7 @@
           <rect x="76" y="30" width="46" height="7" rx="4"/><rect x="76" y="65" width="46" height="7" rx="4"/><rect x="76" y="100" width="46" height="7" rx="4"/></g>
           <path d="M101 122h56q13 0 13-12t-13-12q-2-16-19-17-16-1-24 15-18-4-22 10-3 12 9 16Z" fill="#b7d9bb" stroke="currentColor" stroke-width="4"/>
         </svg>
-        <div class="pc-diagram__device-name">MQTT (HIVEMQ)</div>
+        <div class="pc-diagram__device-name">MQTT BROKER (HIVEMQ)<br>ตัวกลางรับ–ส่งข้อความ</div>
       </div>
       <div class="pc-diagram__exchange">
         <div class="pc-diagram__message">สถานะโต๊ะ / PIN<br> / อุณหภูมิ</div>
@@ -190,36 +187,37 @@
   </div>
 </div></section>
 <section class="shell section" id="workflow">
-  <div class="section-heading"><span class="eyebrow">03 / HOW IT WORKS</span><h2>วิธีใช้งานโต๊ะทำงาน</h2><p>แต่ละโต๊ะรองรับ 2 คน และใช้รหัส PIN ร่วมกันต่อการจอง</p></div>
+  <div class="section-heading"><span class="eyebrow">03 / HOW IT WORKS</span><h2>วิธีการจองโต๊ะ</h2><p>แต่ละโต๊ะรองรับ 2 คน และใช้รหัส PIN ร่วมกันต่อการจอง</p></div>
   <div class="usage-guide">
     <h3 class="usage-title">เริ่มใช้งานโต๊ะ 3 ขั้นตอน</h3>
     <div class="flow-grid">
       <article>
         <div class="flow-top"><span class="number">01</span></div>
-        <div class="step-photo media-slot" data-image="workflow1"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มรูปขั้นตอนเลือกโต๊ะว่าง</span></div>
+        <div class="step-pair"><figure><img src="pic/booking-web.jpg" alt="หน้าเว็บไซต์ ขั้นตอนที่ 1" loading="lazy"><figcaption>เว็บไซต์</figcaption></figure><figure><img src="pic/booking-board.jpg" alt="อุปกรณ์ประจำโต๊ะ ขั้นตอนที่ 1" loading="lazy"><figcaption>อุปกรณ์ประจำโต๊ะ</figcaption></figure></div>
         <h3>เลือกโต๊ะว่าง</h3>
         <p>กด “จองโต๊ะนี้” เพื่อจองโต๊ะสำหรับ 2 คน</p>
       </article>
       <article>
         <div class="flow-top"><span class="number">02</span></div>
-        <div class="step-photo media-slot" data-image="workflow2"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มรูปขั้นตอนกรอกรหัส PIN</span></div>
+        <div class="step-pair"><figure><img src="pic/pin-web.jpg" alt="หน้าเว็บไซต์ ขั้นตอนที่ 2" loading="lazy"><figcaption>เว็บไซต์</figcaption></figure><figure><img src="pic/pin-board.jpg" alt="อุปกรณ์ประจำโต๊ะ ขั้นตอนที่ 2" loading="lazy"><figcaption>อุปกรณ์ประจำโต๊ะ</figcaption></figure></div>
         <h3>รับรหัส PIN</h3>
-        <p>นำรหัส PIN ที่ได้รับไปกรอกที่ Keypad ของโต๊ะ</p>
+        <p>อ่านรหัส PIN ที่บอร์ดส่งมาแสดงบนเว็บไซต์ แล้วกรอกรหัสนั้นที่ Keypad ของโต๊ะ</p>
       </article>
       <article>
         <div class="flow-top"><span class="number">03</span></div>
-        <div class="step-photo media-slot" data-image="workflow3"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มรูปขั้นตอนเริ่มใช้งาน</span></div>
-        <h3>เริ่มทำงาน</h3>
-        <p>เมื่อเสร็จแล้ว กดคืนโต๊ะได้เลย</p>
+        <div class="step-pair"><figure><img src="pic/start-web.jpg" alt="หน้าเว็บไซต์ ขั้นตอนที่ 3" loading="lazy"><figcaption>เว็บไซต์</figcaption></figure><figure><img src="pic/start-board.jpg" alt="อุปกรณ์ประจำโต๊ะ ขั้นตอนที่ 3" loading="lazy"><figcaption>อุปกรณ์ประจำโต๊ะ</figcaption></figure></div>
+        <h3>เริ่มใช้งาน</h3>
+        <p>เมื่อยืนยัน PIN สำเร็จ เว็บไซต์แสดงว่ากำลังใช้งาน และ LCD แสดงเมนู กด A ดูอุณหภูมิ หรือกด B ตั้งเวลาเตือน เมื่อเลิกใช้งานให้กดคืนโต๊ะบนเว็บไซต์</p>
       </article>
     </div>
   </div>
 </section>
-<!-- 04 / PRINCIPLES & CALCULATIONS -->
+<section class="shell section" id="reminder"><div class="section-heading"><span class="eyebrow">04 / ACTIVE REMINDER</span><h2>วิธีตั้งเวลาเตือนเปลี่ยนอิริยาบถ</h2><p>ตั้งเวลาเตือนให้ลุกพักระหว่างนั่งทำงาน</p></div><div class="usage-guide"><div class="flow-grid"><article><div class="flow-top"><span class="number">01</span></div><div class="step-photo"><img src="pic/timer-green.jpg" alt="ตั้งเวลาเตือน" loading="lazy"></div><h3>ตั้งเวลาเตือน</h3><p>จากเมนูหลัก กด B เพื่อเข้าหน้าตั้งเวลา กรอกจำนวนนาทีแล้วกด D เพื่อเริ่ม หรือกด D โดยไม่กรอกตัวเลขเพื่อใช้ค่าเริ่มต้น 45 นาที เมื่อเริ่มนับถอยหลังไฟจะเป็นสีเขียว</p></article><article><div class="flow-top"><span class="number">02</span></div><div class="step-photo"><img src="pic/timer-red.jpg" alt="เตือนเมื่อเหลือ 30 วินาที" loading="lazy"></div><h3>เตือนเมื่อเหลือ 30 วินาที</h3><p>เมื่อเวลานับถอยหลังเหลือ 30 วินาทีหรือน้อยกว่า ไฟ RGB เปลี่ยนเป็นสีแดงเพื่อเตือนว่าถึงเวลาพักในอีกไม่นาน</p></article><article><div class="flow-top"><span class="number">03</span></div><div class="step-photo"><img src="pic/timer-expired.jpg" alt="หมดเวลาและเริ่มรอบใหม่" loading="lazy"></div><h3>หมดเวลาและเริ่มรอบใหม่</h3><p>เมื่อหมดเวลา ไฟแดงจะกะพริบและ LCD แสดง Move Around เพื่อเตือนให้ลุกเปลี่ยนอิริยาบถ กด A (again) เพื่อเริ่มนับด้วยเวลาเดิม หรือกด B (back) เพื่อกลับไปตั้งเวลาใหม่</p></article></div></div></section>
+<!-- PRINCIPLES & CALCULATIONS -->
 <section class="shell section calculations-section" id="calculations" aria-labelledby="calculations-title">
   <div class="section-heading heading-row">
     <div>
-      <span class="eyebrow">04 / SYSTEM CALCULATIONS</span>
+      <span class="eyebrow">05 / SYSTEM CALCULATIONS</span>
       <h2 id="calculations-title">หลักการคำนวณของระบบ</h2>
       <p>สมการที่ใช้จริงในโค้ด Arduino เพื่อวัดอุณหภูมิ ตรวจจับระยะทาง และสร้างรหัส PIN</p>
     </div>
@@ -239,7 +237,7 @@
       <ul class="formula-terms">
         <li><strong>ADC</strong> — ค่าที่อ่านได้จากเซนเซอร์ (ค่าเฉลี่ย 10 ครั้ง)</li>
         <li><strong>V</strong> — แรงดันไฟฟ้า หน่วยโวลต์ (V)</li>
-        <li><strong>T</strong> — อุณหภูมิ หน่วยองศาเซลเซียส (°C)</li>
+        <li><strong>T</strong> — อุณหภูมิ หน่วยองศาเซลเซียส (°C)</li><li><strong>+20</strong> — ค่าปรับชดเชยที่ตั้งไว้ในโค้ดของชิ้นงาน</li>
       </ul>
 
     </article>
@@ -283,43 +281,43 @@
 <section class="shell section results" id="results">
   <div class="section-heading heading-row">
     <div>
-      <span class="eyebrow">05 / THE RESULT</span>
-      <h2>ผลลัพธ์และฟีเจอร์การใช้งาน</h2>
-      <p>ชิ้นงานจริง เว็บไซต์ SmartDesk ฟีเจอร์ตั้งเวลา การแจ้งเตือน และการแสดงอุณหภูมิ</p>
+      <span class="eyebrow">06 / THE RESULT</span>
+      <h2>ผลการทำงาน</h2>
+      <p>ตัวอย่างชิ้นงาน หน้าเว็บไซต์ และหน้าจอระหว่างใช้งาน</p>
     </div>
     <a class="text-link" data-link="website" href="../index.html">เปิด SmartDesk <span aria-hidden="true">↗</span></a>
   </div>
   <div class="result-grid">
     <figure>
-      <div class="result-photo media-slot" data-image="prototype"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มภาพชิ้นงานจริง</span></div>
+      <div class="result-photo media-slot" data-image="prototype"><span>ชิ้นงานจริง</span></div>
       <figcaption><b>01 / ชิ้นงานต้นแบบ</b><span>Arduino ทำงานร่วมกับเซนเซอร์ Ultrasonic และหน้าจอ LCD เพื่อตรวจจับการใช้งานที่นั่งและแสดงสถานะของระบบ SEAT SENSE</span></figcaption>
     </figure>
     <figure>
-      <div class="result-photo media-slot" data-image="website"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มภาพหน้าจอ SmartDesk</span></div>
+      <div class="result-photo media-slot" data-image="website"><span>หน้าจอ SmartDesk</span></div>
       <figcaption><b>02 / เว็บไซต์ SmartDesk</b><span>เว็บไซต์ช่วยให้ผู้ใช้ตรวจสอบสถานะที่นั่งว่าง จองโต๊ะ และรับรหัส PIN เพื่อยืนยันการใช้งานที่โต๊ะจริง</span></figcaption>
     </figure>
     <figure>
-      <div class="result-photo media-slot" data-image="timer"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มรูปการตั้งเวลาบน LCD / Keypad</span></div>
-      <figcaption><b>03 / ฟีเจอร์ตั้งเวลา (Set Time)</b><span>หลังยืนยันรหัส PIN ผู้ใช้กด B บน Keypad เพื่อเข้าสู่เมนูตั้งเวลา กรอกจำนวนนาทีและกด D เพื่อเริ่มนับถอยหลัง หรือใช้ค่าเริ่มต้น 45 นาทีเมื่อไม่กรอกเวลา</span></figcaption>
+      <div class="result-photo media-slot" data-image="timer"><span>การตั้งเวลาบน LCD / Keypad</span></div>
+      <figcaption><b>03 / ตั้งเวลาเตือน</b><span>หลังยืนยันรหัส PIN ผู้ใช้กด B บน Keypad เพื่อเข้าสู่เมนูตั้งเวลา กรอกจำนวนนาทีและกด D เพื่อเริ่มนับถอยหลัง หรือใช้ค่าเริ่มต้น 45 นาทีเมื่อไม่กรอกเวลา</span></figcaption>
     </figure>
     <figure>
-      <div class="result-photo media-slot" data-image="moveAround"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มรูปไฟสีแดงและหน้าจอ Move Around</span></div>
-      <figcaption><b>04 / Active Reminder — Move Around</b><span>เมื่อครบเวลาที่ตั้งไว้ ไฟ RGB สีแดงจะกะพริบ และหน้าจอ LCD แสดงข้อความ “Move Around” เพื่อเตือนให้ผู้ใช้ลุกขึ้นยืดเส้นหรือเดินเปลี่ยนอิริยาบถ ก่อนกลับมาทำงานต่อ</span></figcaption>
+      <div class="result-photo media-slot" data-image="moveAround"><span>ไฟสีแดงและหน้าจอ Move Around</span></div>
+      <figcaption><b>04 / เตือนเมื่อหมดเวลา</b><span>เมื่อครบเวลาที่ตั้งไว้ ไฟ RGB สีแดงจะกะพริบ และหน้าจอ LCD แสดงข้อความ “Move Around” เพื่อเตือนให้ผู้ใช้ลุกขึ้นยืดเส้นหรือเดินเปลี่ยนอิริยาบถ ก่อนกลับมาทำงานต่อ</span></figcaption>
     </figure>
     <figure>
-      <div class="result-photo media-slot" data-image="temperature"><span class="photo-symbol" aria-hidden="true">＋</span><span>เพิ่มรูป LCD แสดง RoomTemp</span></div>
-      <figcaption><b>05 / แสดงอุณหภูมิ (Room Temperature)</b><span>กดปุ่ม A ที่ Keypad เพื่อดูอุณหภูมิจากเซนเซอร์ TMP36 บนหน้าจอ LCD เป็นองศาเซลเซียส และกด B เพื่อกลับเมนู โดย Arduino ยังส่งค่าอุณหภูมิผ่าน MQTT ตามรอบการทำงาน</span></figcaption>
+      <div class="result-photo media-slot" data-image="temperature"><span> LCD แสดง RoomTemp</span></div>
+      <figcaption><b>05 / แสดงอุณหภูมิห้อง</b><span>กดปุ่ม A ที่ Keypad เพื่อดูอุณหภูมิจากเซนเซอร์ TMP36 บนหน้าจอ LCD เป็นองศาเซลเซียส และกด B เพื่อกลับเมนู โดย Arduino ยังส่งค่าอุณหภูมิผ่าน MQTT ตามรอบการทำงาน</span></figcaption>
     </figure>
   </div>
 </section>
-<section class="resources-section" id="resources"><div class="shell section"><div class="section-heading"><span class="eyebrow">06 / EXPLORE THE PROJECT</span><h2>รู้จักโปรเจกต์ให้มากขึ้น</h2><p>รวมเว็บไซต์ คลิปพรีเซนต์ โค้ด และเอกสารไว้ที่นี่</p></div>
+<section class="resources-section" id="resources"><div class="shell section"><div class="section-heading"><span class="eyebrow">07 / EXPLORE THE PROJECT</span><h2>ลิงก์และเอกสารประกอบ</h2><p>รวมเว็บไซต์ คลิปพรีเซนต์ โค้ด และเอกสารไว้ที่นี่</p></div>
 <div class="resource-grid">
-<a class="resource pending" data-link="video" aria-disabled="true"><span class="resource-icon" aria-hidden="true">▷</span><div class="resource-copy"><span class="small-label">VIDEO PRESENTATION</span><h3>คลิปพรีเซนต์</h3><p>ที่มา แนวคิด และสาธิตการทำงาน</p><span class="resource-status">รอเพิ่มลิงก์</span></div><span class="resource-arrow" aria-hidden="true">↗</span></a>
-<a class="resource featured" data-link="website" href="../index.html"><span class="resource-icon" aria-hidden="true">⌘</span><div class="resource-copy"><span class="small-label">PROJECT WEBSITE</span><h3>ใช้งาน SmartDesk</h3><p>เปิดเว็บไซต์ระบบจัดการที่นั่ง</p><span class="resource-status">เปิดเว็บไซต์ ↗</span></div><span class="resource-arrow" aria-hidden="true">↗</span></a>
-<a class="resource" data-link="github" href="https://github.com/Kmitl68070131/SEAT-SENSE" target="_blank" rel="noopener noreferrer"><span class="resource-icon" aria-hidden="true">&lt;/&gt;</span><div class="resource-copy"><span class="small-label">SOURCE CODE</span><h3>เบื้องหลังโค้ดทั้งหมด</h3><p>ดูไฟล์โปรเจกต์และโค้ดบน GitHub</p><span class="resource-status">เปิด GitHub ↗</span></div><span class="resource-arrow" aria-hidden="true">↗</span></a>
+<a class="resource pending" data-link="video" aria-disabled="true"><span class="resource-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect x="3" y="10" width="42" height="28" rx="9" fill="#ff0033"/><path d="m20 17 12 7-12 7z" fill="white"/></svg></span><div class="resource-copy"><span class="small-label">VIDEO PRESENTATION</span><h3>คลิปพรีเซนต์</h3><p>ที่มา แนวคิด และสาธิตการทำงาน</p><span class="resource-status">รอเพิ่มลิงก์</span></div><span class="resource-arrow" aria-hidden="true">↗</span></a>
+<a class="resource featured" data-link="website" href="../index.html"><span class="resource-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M5 23h38v7H5zM9 30h5v14H9zM34 30h5v14h-5z" fill="#269c58"/><rect x="14" y="5" width="22" height="15" rx="2" fill="#127c43"/><path d="M23 20v4" stroke="#127c43" stroke-width="3"/><path d="M17 9h16v7H17z" fill="#baf187"/></svg></span><div class="resource-copy"><span class="small-label">PROJECT WEBSITE</span><h3>ใช้งาน SmartDesk</h3><p>เปิดเว็บไซต์ระบบจัดการที่นั่ง</p><span class="resource-status">เปิดเว็บไซต์ ↗</span></div><span class="resource-arrow" aria-hidden="true">↗</span></a>
+<a class="resource" data-link="github" href="https://github.com/Kmitl68070131/SEAT-SENSE" target="_blank" rel="noopener noreferrer"><span class="resource-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#00979d"/><path d="M24 24c-13-19-24 7-11 7 8 0 14-14 20-14 13 0 8 25-9 7" fill="none" stroke="white" stroke-width="3"/><path d="M10 24h7m15 0h7m-3.5-3.5v7" stroke="white" stroke-width="2"/></svg></span><div class="resource-copy"><span class="small-label">SOURCE CODE</span><h3>โค้ดโปรเจกต์</h3><p>ดูไฟล์โปรเจกต์และโค้ดบน GitHub</p><span class="resource-status">เปิด GitHub ↗</span></div><span class="resource-arrow" aria-hidden="true">↗</span></a>
 <a class="resource pending" data-link="poster" aria-disabled="true"><span class="resource-icon" aria-hidden="true">▤</span><div class="resource-copy"><span class="small-label">PROJECT POSTER</span><h3>โปสเตอร์โปรเจกต์</h3><p>ภาพรวมโปรเจกต์ในเอกสาร PDF</p><span class="resource-status">รอเพิ่มไฟล์ PDF</span></div><span class="resource-arrow" aria-hidden="true">↗</span></a>
 </div></div></section>
-<section class="shell section" id="team"><div class="section-heading heading-row"><div><span class="eyebrow">07 / MEET THE TEAM</span><h2>ผู้จัดทำ</h2><p>ผู้ร่วมออกแบบ พัฒนา และประกอบชิ้นงาน</p></div><span class="outline-label">IT KMITL · 2026</span></div><div class="team-grid" id="team-list"></div>
+<section class="shell section" id="team"><div class="section-heading heading-row"><div><span class="eyebrow">08 / MEET THE TEAM</span><h2>ผู้จัดทำ</h2><p>สมาชิกในกลุ่ม</p></div><span class="outline-label">IT KMITL · 2026</span></div><div class="team-grid" id="team-list"></div>
 <div class="university"><p>โปรเจกต์วิชา Physical Computing<br><strong>คณะเทคโนโลยีสารสนเทศ สถาบันเทคโนโลยีพระจอมเกล้าเจ้าคุณทหารลาดกระบัง</strong></p></div></section>
 </main>
 <footer class="shell footer"><a class="footer-brand" href="#home">SEAT-SENSE</a><span>Smart Ergonomic &amp; Available Table</span><a href="#home">กลับด้านบน ↑</a></footer>
