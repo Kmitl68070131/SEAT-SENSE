@@ -5,7 +5,7 @@ window.PROJECT_CONTENT = {
   links: {
     website: "../index.html", // หน้า SEAT-SENSE Website เดิมใน repo
     github: "https://github.com/Kmitl68070131/SEAT-SENSE",
-    video: "", // วาง URL วิดีโอนำเสนอ
+    video: "https://youtu.be/6ZuyuDjaVkQ?si=qEOFWi2CBhON3Sn3", // วาง URL วิดีโอนำเสนอ
     poster: "https://drive.google.com/file/d/1i8Fl24YtK2P3wG4ywaIeZ6JDMK3-GOQW/view?usp=sharing" // เช่น "assets/poster.pdf" หรือ URL ไฟล์ PDF
   },
   images: {
