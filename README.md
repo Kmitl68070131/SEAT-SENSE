@@ -370,10 +370,10 @@ smartdesk/A0/command
 
 | รหัสนักศึกษา | ชื่อ–นามสกุล | หน้าที่ / บทบาทหลัก |
 | --- | --- | --- |
-| 68070128 | นายพีระพัฒน์ เสียนาสระ | Backend & Cloud API Developer |
+| 68070128 | นายพีระพัฒน์ เสียนาสระ | Project Website & Poster Design |
 | 68070131 | นายภควรรษ หันหลวงราช | Embedded Firmware & Hardware Engineer |
-| 68070148 | นายภูสิทธิ์ รุ่งเรือง | Frontend Web Developer |
-| 68070164 | นายวชิรวิทย์ อนุสุนชนัง | Hardware Assembly & Integration |
+| 68070148 | นายภูสิทธิ์ รุ่งเรือง | Project Website & Poster Design |
+| 68070164 | นายวชิรวิทย์ อนุสุนชนัง | Embedded Firmware & Hardware Engineer |
 
 ---
 
